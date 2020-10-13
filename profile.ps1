@@ -16,10 +16,6 @@ if ($env:MSI_SECRET -and (Get-Module -ListAvailable Az.Accounts)) {
     Connect-AzAccount -Identity
 }
 
-<#
-$64bitPowerShellPath = Get-ChildItem -Path $Env:Windir\WinSxS | Where-Object {$_.FullName -match "amd64_microsoft-windows-powershell-exe"}
-$env:64bitPowerShellPath = Get-ChildItem -Path $64bitPowerShellPath.FullName -Filter PowerShell.exe | Select-Object -ExpandProperty FullName
-#>
 # Uncomment the next line to enable legacy AzureRm alias in Azure PowerShell.
 # Enable-AzureRmAlias
 

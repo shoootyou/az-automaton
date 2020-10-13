@@ -15,106 +15,108 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
-$TMP_01 = "E3CDC44C497E965617915BEDEF8A03B258ADD400"
-$TMP_02 = "2870da78-0ab1-4046-8e95-7a4ee7dc440d"
-$TMP_03 = "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
-$TMP_04 = "DefaultEndpointsProtocol=https;AccountName=orionazreport01;AccountKey=nAW+PdKp8cPy0pBn4zCaR1NBV6uimiG7/pk83Yyg0qihPup7DgfGsbmhB8glbU5hdqPOUDFt/tsSTFXxBBPlOw==;EndpointSuffix=core.windows.net"
-
-$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $TMP_04
+$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
-Import-Module AzureAD -UseWindowsPowerShell
+
+$ErrorActionPreference = "SilentlyContinue"
+$WarningPreference = "SilentlyContinue"
 
 ################################################################################################
 #endregion                         Get Client information
 ################################################################################################
 
-foreach ($AzAuClient in $INT_DB_TBL_SUB) {
-
+foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
+    
     ################################################################################################
     #region                                 Login process
     ################################################################################################
-      
-        $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -Tenant $AzAuClient.TenantId -ServicePrincipal
-        $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -TenantId $AzAuClient.TenantId
-        $OUT_TBL_CNN = $TMP_03
+    Write-Host "Control 1"
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
 
-    ################################################################################################
-    #region                      Initialization Variables and Information
-    ################################################################################################
-
-    $GBL_IN_FOR_CNT = 1
-    $GBL_IN_SUB_CNT = 0
-    $ErrorActionPreference = "Stop"
-    $WarningPreference = "Stop"
-
-    $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $OUT_TBL_CNN
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
-
-    ################################################################################################
-    #endregion                   Initialization Variables and Information
-    ################################################################################################
-
-    ################################################################################################
-    #region                           Master Tables preparation
-    ################################################################################################
-    Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
-
-    $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_SUB){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
-    }
-    Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
-
-    $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_RSG){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
-    }
-    Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
-
-    $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_REG){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
-    }
-    Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
-
-    $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_RES){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
-    }
-    Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
-
-    $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_REC){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
-    }
-    Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
-
-    $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
-    if(!$OUT_DB_TBL_PER){
-        Start-Sleep -Seconds 10
-        $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
-    }
-    Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
-
-    ################################################################################################
-    #endregion                        Master Tables preparation
-    ################################################################################################
 
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
-    foreach($SUB in $COR_AZ_SUB_ALL){
+    $COR_AZ_SUB_ALL | ForEach-Object -Parallel {
+        Write-Host "Control 2"
+        Write-Host $_.TenantId
+        ################################################################################################
+        #region                      Initialization Variables and Information
+        ################################################################################################
+        
+        Import-Module AzureAD -UseWindowsPowerShell
+        $ENV:AzAu_CertificateThumbprint = "E3CDC44C497E965617915BEDEF8A03B258ADD400"
+        $ENV:AzAu_ApplicationId = "2870da78-0ab1-4046-8e95-7a4ee7dc440d"
+        $ENV:AzAu_ConnectionString = "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $_.TenantId
+        $GBL_IN_FOR_CNT = 1
+        $GBL_IN_SUB_CNT = 0
+        $OUT_TBL_CNN = $ENV:AzAu_ConnectionString
+        $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $OUT_TBL_CNN
+
+        ################################################################################################
+        #endregion                   Initialization Variables and Information
+        ################################################################################################
+
+        ################################################################################################
+        #region                           Master Tables preparation
+        ################################################################################################
+        Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
+
+        $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_SUB){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
+        }
+        Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
+
+        $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_RSG){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
+        }
+        Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
+
+        $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_REG){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
+        }
+        Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
+
+        $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_RES){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
+        }
+        Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
+
+        $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_REC){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
+        }
+        Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
+
+        $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
+        if(!$OUT_DB_TBL_PER){
+            Start-Sleep -Seconds 10
+            $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
+        }
+        Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
+
+        ################################################################################################
+        #endregion                        Master Tables preparation
+        ################################################################################################
+
+        $SUB = $_
         $WR_BAR = $SUB.Name
         Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $SUB.SubscriptionId -ForegroundColor DarkGray
         
@@ -234,7 +236,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
             }
             #endregion comprobaciones internas de suscripciones
 
-            Write-Host "    B. Cargado de informacion de subscripcion" -ForegroundColor Cyan
+            Write-Host "    B. Cargando de informacion de subscripcion" -ForegroundColor Cyan
             $SUB_TNT = (Get-AzureADTenantDetail | Select-Object DisplayName).DisplayName
             Add-AzTableRow `
                 -UpdateExisting `
@@ -300,7 +302,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
             
             #region informacion de las regiones empleadas
             
-            Write-Host "    D. Cargado de informacion de regiones empleadas" -ForegroundColor Cyan
+            Write-Host "    D. Cargando de informacion de regiones empleadas" -ForegroundColor Cyan
             $DB_AZ_RES_REG = $DB_AZ_RES_ALL | Select-Object Location -Unique
             
             foreach($REG in $DB_AZ_RES_REG){
@@ -314,13 +316,19 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
                         "TenantId" = $SUB.TenantId
                     } | Out-Null
             }
-            Write-Host "        Se cargaron " $DB_AZ_RES_REG.Length " regiones exitosamente" -ForegroundColor DarkGreen
+            if($DB_AZ_RES_REG.Length){
+                Write-Host "        Se cargaron " $DB_AZ_RES_REG.Length " regiones exitosamente" -ForegroundColor DarkGreen
+            }
+            else{
+                Write-Host "        Se cargaron 1 regiones exitosamente" -ForegroundColor DarkGreen
+            }
+            
 
             #endregion informacion de las regiones empleadas
 
             #region información de grupos de recursos
             
-            Write-Host "    E. Cargado de informacion de grupo de recursos empleadas" -ForegroundColor Cyan
+            Write-Host "    E. Cargando de informacion de grupo de recursos empleadas" -ForegroundColor Cyan
             
             foreach($GRP in $DB_AZ_RSG_ALL){
                 Add-AzTableRow `
@@ -342,7 +350,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region información general de recursos
             
-            Write-Host "    F. Cargado de informacion general de recursos" -ForegroundColor Cyan
+            Write-Host "    F. Cargando de informacion general de recursos" -ForegroundColor Cyan
             $GBL_IN_FOR_CNT = 1
             foreach($RES in $DB_AZ_RES_ALL){
                 $WR_BAR = ($RES.ResourceId.Substring($RES.ResourceId.IndexOf("providers")+10)).Replace("/",".").Replace(" ","_").Replace("#","_")
@@ -383,7 +391,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region información recomendaciones de azure advisor
             
-            Write-Host "    G. Cargado de informacion de recomendaciones de Azure Advisor" -ForegroundColor Cyan
+            Write-Host "    G. Cargando de informacion de recomendaciones de Azure Advisor" -ForegroundColor Cyan
             $DB_AZ_REC_ALL = Get-AzAdvisorRecommendation | Select-Object * | Sort-Object Category
             $GBL_IN_FOR_CNT = 1
             foreach($REC in $DB_AZ_REC_ALL){ 
@@ -437,7 +445,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region informacion de Storages Accounts
                 
-            Write-Host "    I. Cargado de informacion de cuentas de almacenamiento" -ForegroundColor Cyan
+            Write-Host "    I. Cargando de informacion de cuentas de almacenamiento" -ForegroundColor Cyan
             $DB_AZ_STO_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Storage/storageAccounts'} | Select-Object *
             if($DB_AZ_STO_ALL){
                 $OUT_DB_TBL_STO = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_STO_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -545,7 +553,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region informacion de Virtual Machines
         
-            Write-Host "    J. Cargado de informacion de maquinas virtuales" -ForegroundColor Cyan
+            Write-Host "    J. Cargando de informacion de maquinas virtuales" -ForegroundColor Cyan
             $DB_AZ_CMP_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Compute/virtualMachines'} | Select-Object *
             if($DB_AZ_CMP_ALL){
                 $OUT_DB_TBL_CMP = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_CMP_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -608,7 +616,12 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
                     }
                     if($null -ne $CMP_INF.DiagnosticsProfile.BootDiagnostics.Enabled){
                         $BOT_ENA = $CMP_INF.DiagnosticsProfile.BootDiagnostics.Enabled.ToString()
-                        $BOT_STO = $CMP_INF.DiagnosticsProfile.BootDiagnostics.StorageUri
+                        if($CMP_INF.DiagnosticsProfile.BootDiagnostics.StorageUri){
+                            $BOT_STO = $CMP_INF.DiagnosticsProfile.BootDiagnostics.StorageUri
+                        }
+                        else{
+                            $BOT_STO = "Undefined"
+                        }
                     }
                     else{
                         $BOT_ENA = "Undefined"
@@ -685,7 +698,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region informacion de Azure Disks
         
-            Write-Host "    K. Cargado de informacion de azure disks" -ForegroundColor Cyan
+            Write-Host "    K. Cargando de informacion de azure disks" -ForegroundColor Cyan
             $DB_AZ_DSK_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Compute/disks'} | Select-Object *
             if($DB_AZ_DSK_ALL){
                 $OUT_DB_TBL_DSK = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_DSK_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -879,7 +892,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
 
             #region informacion de  Azure SQL Server
         
-            Write-Host "    L. Cargado de informacion de Azure SQL Server" -ForegroundColor Cyan
+            Write-Host "    L. Cargando de informacion de Azure SQL Server" -ForegroundColor Cyan
             $DB_AZ_SQLSRV_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Sql/servers'} | Select-Object *
             if($DB_AZ_SQLSRV_ALL){
                 $OUT_DB_TBL_SQLSRV = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_SQLSRV_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -982,7 +995,7 @@ foreach ($AzAuClient in $INT_DB_TBL_SUB) {
         
             #region informacion de  Azure SQL Database
 
-            Write-Host "    L. Cargado de informacion de Azure SQL Database" -ForegroundColor Cyan
+            Write-Host "    L. Cargando de informacion de Azure SQL Database" -ForegroundColor Cyan
             $DB_AZ_SQLDB_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Sql/servers/databases'} | Select-Object *
             if($DB_AZ_SQLDB_ALL){
                 $OUT_DB_TBL_SQLDB = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_SQLDB_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
