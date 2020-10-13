@@ -66,68 +66,79 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
-        $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 
         ################################################################################################
         #endregion                   Initialization Variables and Information
         ################################################################################################
 
-        ################################################################################################
-        #region                           Master Tables preparation
-        ################################################################################################
-        Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
-
-        $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_SUB){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
-        }
-        Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
-
-        $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_RSG){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
-        }
-        Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
-
-        $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_REG){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
-        }
-        Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
-
-        $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_RES){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
-        }
-        Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
-
-        $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_REC){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
-        }
-        Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
-
-        $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
-        if(!$OUT_DB_TBL_PER){
-            Start-Sleep -Seconds 10
-            $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
-        }
-        Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
-
-        ################################################################################################
-        #endregion                        Master Tables preparation
-        ################################################################################################
-
-        $SUB = $_
-        $WR_BAR = $SUB.Name
-        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $SUB.SubscriptionId -ForegroundColor DarkGray
+        $WR_BAR = $ITM_SUB.Name
+        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $ITM_SUB.SubscriptionId -ForegroundColor DarkGray
         
-        if($SUB.State -eq "Enabled" -and $SUB.Name -notlike "*Azure Active Directory"){
+        if($ITM_SUB.State -ne "Enabled" -or $ITM_SUB.Name -like "*Azure Active Directory"){
+            if($ITM_SUB.Name -like "*Azure Active Directory"){
+                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
+            }
+            else{
+                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
+                Start-Sleep -Seconds 10    
+            }
+        }
+        else{
+
+            ################################################################################################
+            #region                           Master Tables preparation
+            ################################################################################################
+
+            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+
+            Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
+
+            $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_SUB){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
+            }
+            Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
+
+            $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_RSG){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
+            }
+            Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
+
+            $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_REG){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
+            }
+            Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
+
+            $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_RES){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
+            }
+            Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
+
+            $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_REC){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
+            }
+            Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
+
+            $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
+            if(!$OUT_DB_TBL_PER){
+                Start-Sleep -Seconds 10
+                $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
+            }
+            Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
+
+            ################################################################################################
+            #endregion                        Master Tables preparation
+            ################################################################################################
+
             #region selección de subscripción y recursos
             Write-Host "    A. Obtencion de informacion de subscripciones y recursos" -ForegroundColor Cyan
             Select-AzSubscription -Subscription $SUB.SubscriptionId | Out-Null
@@ -1134,18 +1145,9 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             Invoke-RestMethod @parameters
 
             ################################################################################################
-            #endregion                     Azure Function - Teams reporting
+            #endregion                  Azure Function - Teams reporting
             ################################################################################################
 
-        }
-        else{
-            if($SUB.Name -like "*Azure Active Directory"){
-                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
-            }
-            else{
-                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
-                Start-Sleep -Seconds 10    
-            }
         }
         $GBL_IN_SUB_CNT++
         
