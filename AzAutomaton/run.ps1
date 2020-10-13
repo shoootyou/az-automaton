@@ -24,6 +24,8 @@ $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnect
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
 
+Write-Host "Control 0"
+
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX -ErrorAction SilentlyContinue
 $OUT_DB_TBL_SUB | ForEach-Object -Parallel {
