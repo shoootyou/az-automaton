@@ -46,7 +46,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     $COR_AZ_SUB_ALL | ForEach-Object -Parallel {
         Write-Host "Control 2"
-        Write-Host $_.SubscriptionName " | " $_.SubscriptionId " | " $_.TenantId " | " $_.Environment
+        #Write-Host $_.SubscriptionName " | " $_.SubscriptionId " | " $_.TenantId " | " $_.Environment
+        Write-Host $_
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
