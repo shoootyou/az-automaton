@@ -20,17 +20,25 @@ $WarningPreference = "SilentlyContinue"
 
 Write-Host $currentUTCtime
 
-$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
+$TMP_01 = "E3CDC44C497E965617915BEDEF8A03B258ADD400"
+$TMP_02 = "2870da78-0ab1-4046-8e95-7a4ee7dc440d"
+$TMP_03 = "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
+$TMP_04 = "DefaultEndpointsProtocol=https;AccountName=orionazreport01;AccountKey=nAW+PdKp8cPy0pBn4zCaR1NBV6uimiG7/pk83Yyg0qihPup7DgfGsbmhB8glbU5hdqPOUDFt/tsSTFXxBBPlOw==;EndpointSuffix=core.windows.net"
+$TMP_05 = "https://outlook.office.com/webhook/c2e8910e-c4d5-4dbc-9206-3ee8d5b2060b@16f15083-eb69-41dd-8f91-3d0997ce821b/IncomingWebhook/16acab8d160b4da9bd77f50e3cff1744/d7320306-83c3-44ce-b595-f2030d943140"
+$TMP_06 = "https://orionazreport02.vault.azure.net/secrets/AzAuPowerBIReport/5f5eeb6c52a345a2ac99b65d2c71a339"
+
+$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $TMP_04
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
 
 Write-Host "Control 0"
 
-$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $TMP_03
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX -ErrorAction SilentlyContinue
 $OUT_DB_TBL_SUB | ForEach-Object -Parallel {
-    $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
-    Remove-AzStorageTable –Name amasterregions –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
+    $OUT_TBL_CTX = New-AzStorageContext -ConnectionString "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
+    Write-Host $_.Name
+    Remove-AzStorageTable –Name $_.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
 ################################################################################################
@@ -43,7 +51,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     #region                                 Login process
     ################################################################################################
     Write-Host "Control 1"
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
     ################################################################################################
@@ -62,8 +70,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         #region                      Initialization Variables and Information
         ################################################################################################
         
-        Import-Module AzureAD -UseWindowsPowerShell
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
+        Import-Module AzureAD -UseWindowsPowerShell 
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
 
@@ -89,7 +97,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             #region                           Master Tables preparation
             ################################################################################################
 
-            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $TMP_03
 
             Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
 
@@ -459,7 +467,79 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             $GBL_IN_FOR_CNT = 1
             #endregion información recomendaciones de azure advisor
 
+            #region información de informacion de usuarios administrativos de Azure
+                
+            Write-Host "    H. Cargado de informacion de usuarios administrativos de Azure" -ForegroundColor Cyan
+            $DB_AZ_PER_ALL = Get-AzRoleAssignment | Select-Object * | Sort-Object Scope -Descending
+            $GBL_IN_FOR_CNT = 1
+            foreach($USR in $DB_AZ_PER_ALL){
+                $WR_BAR = $USR.DisplayName
+                $FD_SCP = $USR.Scope
+                $FD_SIG = $USR.SignInName
+                $FD_ROW = $USR.RoleAssignmentId.Substring($USR.RoleAssignmentId.LastIndexOf("/")+1)
+                if($USR.ObjectType -eq "User"){
+                    $FS_TYP = Get-AzureADUser -ObjectId $USR.ObjectId | Select-Object *
+                    if($FS_TYP.UserType){
+                        $FS_TYP =  $FS_TYP.UserType
+                    }
+                    elseif($FS_TYP.ImmutableId){
+                        $FS_TYP = "Member"
+                    }
+                    else{
+                        $FS_TYP = "Undefined"
+                    }
+                }
+                elseif ($USR.ObjectType -eq "ServicePrincipal") {
+                    $FS_TYP = (Get-AzureADServicePrincipal -ObjectId $USR.ObjectId | Select-Object ServicePrincipalType).ServicePrincipalType
+                }
+                else {
+                    $FS_TYP = $USR.ObjectType
+                }
+                
+                if($FD_SCP -like "*managementGroups*" ){
+                    $FD_SCP = "Management Group"
+                }
+                elseif($FD_SCP -like "*providers*" ){
+                    $FD_SCP = "Resource"
+                }
+                elseif ($FD_SCP -like "*resourcegroups*") {
+                    $FD_SCP = "Resource Group"
+                }
+                elseif ($FD_SCP -like "*subscriptions*") {
+                    $FD_SCP = "Subscription"
+                }
+                else{
+                    $FD_SCP = "Root"
+                }
 
+                if(!$FD_SIG){
+                    $FD_SIG = "Undefined"
+                }
+
+                Add-AzTableRow `
+                    -UpdateExisting `
+                    -Table $OUT_DB_TBL_PER.CloudTable `
+                    -PartitionKey $SUB.TenantId `
+                    -RowKey $FD_ROW `
+                    -Property @{
+                        "RoleAssignmentId" = $USR.RoleAssignmentId;
+                        "Scope" = $USR.Scope;
+                        "ScopeLevel" = $FD_SCP;
+                        "DisplayName" = $USR.DisplayName;
+                        "SignInName" = $FD_SIG;
+                        "RoleDefinitionName" = $USR.RoleDefinitionName;
+                        "RoleDefinitionId" = $USR.RoleDefinitionId;
+                        "CanDelegate" = $USR.CanDelegate;
+                        "ObjectType" = $USR.ObjectType;
+                        "UserType" = $FS_TYP;
+                        "SubscriptionId" = $SUB.SubscriptionId
+                    } | Out-Null
+                $GBL_IN_FOR_CNT++
+                
+            }
+            Write-Host "        Se cargaron " $DB_AZ_PER_ALL.Length " usuarios administrativos exitosamente" -ForegroundColor DarkGreen
+            $GBL_IN_FOR_CNT = 1
+            #endregion información de informacion de usuarios administrativos de Azure
 
             #region informacion de Storages Accounts
                 
@@ -1091,69 +1171,67 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
             
             #endregion informacion de  Azure SQL Database
-
-            ################################################################################################
-            #region                     Azure Function - Teams reporting
-            ################################################################################################
-
-            $JSONBody = [PSCustomObject][Ordered]@{
-                "@type"      = "MessageCard"
-                "@context"   = "http://schema.org/extensions"
-                "summary"    = "AzAutomaton"
-                "themeColor" = '0078D7'
-                "sections"   = @(
-                    @{
-                        "activityTitle"    = "Actualizacion de reporte"
-                        "activitySubtitle" = "Se envía actualización de reporte de recursos en Azure - Power BI"
-                        "activityImage" = "https://cdn0.iconfinder.com/data/icons/website-design-4/467/Protection_icon-512.png"
-                        "facts"            = @(
-                            @{
-                                "name"  = "Cliente"
-                                "value" = $MAS_CLI.RowKey
-                            },
-                            @{
-                                "name"  = "Nombre de suscripcion"
-                                "value" = $SUB.Name
-                            },
-                            @{
-                                "name"  = "ID de Subscripcion"
-                                "value" = $SUB.SubscriptionId
-                            },
-                            @{
-                                "name"  = "ID de Tenant (Azure AD)"
-                                "value" = $SUB.TenantId
-                            },
-                            @{
-                                "name"  = "Estado"
-                                "value" = "OK"
-                            }
-                        )
-                                "markdown" = $true
-                    }
-                )
-            }
-             
-            $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
-             
-            $parameters = @{
-                "URI"         = $ENV:AzAu_TeamsConnection
-                "Method"      = 'POST'
-                "Body"        = $TeamMessageBody
-                "ContentType" = 'application/json'
-            }
-             
-            Invoke-RestMethod @parameters
-
-            ################################################################################################
-            #endregion                  Azure Function - Teams reporting
-            ################################################################################################
-
         }
         $GBL_IN_SUB_CNT++
-        
     }
     ################################################################################################
     #endregion                              Process Section
+    ################################################################################################
+
+    ################################################################################################
+    #region                     Azure Function - Teams reporting
+    ################################################################################################
+
+    $JSONBody = [PSCustomObject][Ordered]@{
+    "@type"      = "MessageCard"
+    "@context"   = "http://schema.org/extensions"
+    "summary"    = "AzAutomaton"
+    "themeColor" = '0078D7'
+    "sections"   = @(
+        @{
+            "activityTitle"    = "<h1>Actualizacion de reporte</h1>"
+            "activitySubtitle" = "Se envia actualizacion de reporte de recursos en Azure - Power BI"
+            "activityImage" = "https://cdn0.iconfinder.com/data/icons/website-design-4/467/Protection_icon-512.png"
+            "facts"            = @(
+                @{
+                    "name"  = "Cliente"
+                    "value" = $MAS_CLI.RowKey
+                },
+                @{
+                    "name"  = "Dominio interno"
+                    "value" = $COR_AZ_TNT_ALL.TenantDomain
+                },
+                @{
+                    "name"  = "ID de Tenant (Azure AD)"
+                    "value" = $SUB.TenantId
+                },
+                @{
+                    "name"  = "Suscripciones revisadas"
+                    "value" = '<blockquote>' + ($COR_AZ_SUB_ALL.Name -join ' <br> ') + '</blockquote>'
+                },
+                @{
+                    "name"  = "URL de Reporte"
+                    "value" = ('<a href=' + $TMP_06 + '>AzAutomaton - PowerBI Report</a>')
+                }
+            )
+                    "markdown" = $false
+        }
+    )
+    }
+
+    $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
+
+    $parameters = @{
+    "URI"         = $TMP_05
+    "Method"      = 'POST'
+    "Body"        = $TeamMessageBody
+    "ContentType" = 'application/json'
+    }
+
+    Invoke-RestMethod @parameters
+
+    ################################################################################################
+    #endregion                  Azure Function - Teams reporting
     ################################################################################################
 }
 
