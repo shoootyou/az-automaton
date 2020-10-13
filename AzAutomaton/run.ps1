@@ -15,14 +15,21 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
+$ErrorActionPreference = "SilentlyContinue"
+$WarningPreference = "SilentlyContinue"
+
 Write-Host $currentUTCtime
 
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
 
-$ErrorActionPreference = "SilentlyContinue"
-$WarningPreference = "SilentlyContinue"
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+$OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX -ErrorAction SilentlyContinue
+$OUT_DB_TBL_SUB | ForEach-Object -Parallel {
+    $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+    Remove-AzStorageTable –Name amasterregions –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
+}
 
 ################################################################################################
 #endregion                         Get Client information
@@ -57,8 +64,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $_.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
-        $OUT_TBL_CNN = $ENV:AzAu_ConnectionString
-        $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $OUT_TBL_CNN
+        $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 
         ################################################################################################
         #endregion                   Initialization Variables and Information
@@ -1073,6 +1079,61 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             
             #endregion informacion de  Azure SQL Database
 
+            ################################################################################################
+            #region                     Azure Function - Teams reporting
+            ################################################################################################
+
+            $JSONBody = [PSCustomObject][Ordered]@{
+                "@type"      = "MessageCard"
+                "@context"   = "http://schema.org/extensions"
+                "summary"    = "AzAutomaton"
+                "themeColor" = '0078D7'
+                "sections"   = @(
+                    @{
+                        "activityTitle"    = "Actualizacion de reporte"
+                        "activitySubtitle" = ""
+                        "facts"            = @(
+                            @{
+                                "name"  = "Cliente"
+                                "value" = $MAS_CLI.RowKey
+                            },
+                            @{
+                                "name"  = "Nombre de suscripcion"
+                                "value" = $_.Name
+                            },
+                            @{
+                                "name"  = "ID de Subscripcion"
+                                "value" = $_.SubscriptionId
+                            },
+                            @{
+                                "name"  = "ID de Tenant (Azure AD)"
+                                "value" = $_.TenantId
+                            },
+                            @{
+                                "name"  = "Estado"
+                                "value" = "OK"
+                            }
+                        )
+                                "markdown" = $true
+                    }
+                )
+            }
+             
+            $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
+             
+            $parameters = @{
+                "URI"         = $ENV:AzAu_TeamsConnection
+                "Method"      = 'POST'
+                "Body"        = $TeamMessageBody
+                "ContentType" = 'application/json'
+            }
+             
+            Invoke-RestMethod @parameters
+
+            ################################################################################################
+            #endregion                     Azure Function - Teams reporting
+            ################################################################################################
+
         }
         else{
             if($SUB.Name -like "*Azure Active Directory"){
@@ -1084,56 +1145,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
         }
         $GBL_IN_SUB_CNT++
-
-
-        $JSONBody = [PSCustomObject][Ordered]@{
-            "@type"      = "MessageCard"
-            "@context"   = "http://schema.org/extensions"
-            "summary"    = "AzAutomaton"
-            "themeColor" = '0078D7'
-            "sections"   = @(
-                @{
-                    "activityTitle"    = "Actualizacion de reporte"
-                    "activitySubtitle" = ""
-                    "facts"            = @(
-                        @{
-                            "name"  = "Cliente"
-                            "value" = $MAS_CLI.RowKey
-                        },
-                        @{
-                            "name"  = "Nombre de suscripcion"
-                            "value" = $_.Name
-                        },
-                        @{
-                            "name"  = "ID de Subscripcion"
-                            "value" = $_.SubscriptionId
-                        },
-                        @{
-                            "name"  = "ID de Tenant (Azure AD)"
-                            "value" = $_.TenantId
-                        },
-                        @{
-                            "name"  = "Estado"
-                            "value" = "OK"
-                        }
-                    )
-                            "markdown" = $true
-                }
-            )
-        }
-         
-        $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
-         
-        $parameters = @{
-            "URI"         = $ENV:AzAu_TeamsConnection
-            "Method"      = 'POST'
-            "Body"        = $TeamMessageBody
-            "ContentType" = 'application/json'
-        }
-         
-        Invoke-RestMethod @parameters
-
-
         
     }
     ################################################################################################
