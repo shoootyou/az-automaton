@@ -55,15 +55,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
-    $COR_AZ_SUB_ALL | ForEach-Object -Parallel {
+    foreach ($ITM_SUB in $COR_AZ_SUB_ALL){
         Write-Host "Control 2"
-        Write-Host $MAS_CLI.RowKey " | " $_.Name " | " $_.SubscriptionId " | " $_.TenantId 
+        Write-Host $MAS_CLI.RowKey " | " $ITM_SUB.Name " | " $ITM_SUB.SubscriptionId " | " $ITM_SUB.TenantId 
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
         
         Import-Module AzureAD -UseWindowsPowerShell
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $_.TenantId
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
         $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
@@ -1093,7 +1093,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 "sections"   = @(
                     @{
                         "activityTitle"    = "Actualizacion de reporte"
-                        "activitySubtitle" = ""
+                        "activitySubtitle" = "Se envía actualización de reporte de recursos en Azure - Power BI"
+                        "activityImage" = "https://cdn0.iconfinder.com/data/icons/website-design-4/467/Protection_icon-512.png"
                         "facts"            = @(
                             @{
                                 "name"  = "Cliente"
@@ -1101,15 +1102,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             },
                             @{
                                 "name"  = "Nombre de suscripcion"
-                                "value" = $_.Name
+                                "value" = $ITM_SUB.Name
                             },
                             @{
                                 "name"  = "ID de Subscripcion"
-                                "value" = $_.SubscriptionId
+                                "value" = $ITM_SUB.SubscriptionId
                             },
                             @{
                                 "name"  = "ID de Tenant (Azure AD)"
-                                "value" = $_.TenantId
+                                "value" = $ITM_SUB.TenantId
                             },
                             @{
                                 "name"  = "Estado"
