@@ -55,15 +55,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
-    foreach ($ITM_SUB in $COR_AZ_SUB_ALL){
+    foreach ($SUB in $COR_AZ_SUB_ALL){
         Write-Host "Control 2"
-        Write-Host $MAS_CLI.RowKey " | " $ITM_SUB.Name " | " $ITM_SUB.SubscriptionId " | " $ITM_SUB.TenantId 
+        Write-Host $MAS_CLI.RowKey " | " $SUB.Name " | " $SUB.SubscriptionId " | " $SUB.TenantId 
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
         
         Import-Module AzureAD -UseWindowsPowerShell
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
 
@@ -71,11 +71,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         #endregion                   Initialization Variables and Information
         ################################################################################################
 
-        $WR_BAR = $ITM_SUB.Name
-        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $ITM_SUB.SubscriptionId -ForegroundColor DarkGray
+        $WR_BAR = $SUB.Name
+        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $SUB.SubscriptionId -ForegroundColor DarkGray
         
-        if($ITM_SUB.State -ne "Enabled" -or $ITM_SUB.Name -like "*Azure Active Directory"){
-            if($ITM_SUB.Name -like "*Azure Active Directory"){
+        if($SUB.State -ne "Enabled" -or $SUB.Name -like "*Azure Active Directory"){
+            if($SUB.Name -like "*Azure Active Directory"){
                 Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
             }
             else{
@@ -1113,15 +1113,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             },
                             @{
                                 "name"  = "Nombre de suscripcion"
-                                "value" = $ITM_SUB.Name
+                                "value" = $SUB.Name
                             },
                             @{
                                 "name"  = "ID de Subscripcion"
-                                "value" = $ITM_SUB.SubscriptionId
+                                "value" = $SUB.SubscriptionId
                             },
                             @{
                                 "name"  = "ID de Tenant (Azure AD)"
-                                "value" = $ITM_SUB.TenantId
+                                "value" = $SUB.TenantId
                             },
                             @{
                                 "name"  = "Estado"
