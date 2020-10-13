@@ -15,6 +15,8 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
+Write-Host $currentUTCtime
+
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
@@ -46,8 +48,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     $COR_AZ_SUB_ALL | ForEach-Object -Parallel {
         Write-Host "Control 2"
-        #Write-Host $_.SubscriptionName " | " $_.SubscriptionId " | " $_.TenantId " | " $_.Environment
-        Write-Host $_
+        Write-Host $MAS_CLI.RowKey " | " $_.Name " | " $_.SubscriptionId " | " $_.TenantId 
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
@@ -1083,6 +1084,57 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
         }
         $GBL_IN_SUB_CNT++
+
+
+        $JSONBody = [PSCustomObject][Ordered]@{
+            "@type"      = "MessageCard"
+            "@context"   = "http://schema.org/extensions"
+            "summary"    = "AzAutomaton"
+            "themeColor" = '0078D7'
+            "sections"   = @(
+                @{
+                    "activityTitle"    = "Actualizacion de reporte"
+                    "activitySubtitle" = ""
+                    "facts"            = @(
+                        @{
+                            "name"  = "Cliente"
+                            "value" = $MAS_CLI.RowKey
+                        },
+                        @{
+                            "name"  = "Nombre de suscripcion"
+                            "value" = $_.Name
+                        },
+                        @{
+                            "name"  = "ID de Subscripcion"
+                            "value" = $_.SubscriptionId
+                        },
+                        @{
+                            "name"  = "ID de Tenant (Azure AD)"
+                            "value" = $_.TenantId
+                        },
+                        @{
+                            "name"  = "Estado"
+                            "value" = "OK"
+                        }
+                    )
+                            "markdown" = $true
+                }
+            )
+        }
+         
+        $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
+         
+        $parameters = @{
+            "URI"         = $ENV:AzAu_TeamsConnection
+            "Method"      = 'POST'
+            "Body"        = $TeamMessageBody
+            "ContentType" = 'application/json'
+        }
+         
+        Invoke-RestMethod @parameters
+
+
+        
     }
     ################################################################################################
     #endregion                              Process Section
