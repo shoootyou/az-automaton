@@ -46,15 +46,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     $COR_AZ_SUB_ALL | ForEach-Object -Parallel {
         Write-Host "Control 2"
-        Write-Host $_.TenantId
+        Write-Host $_.SubscriptionName " | " $_.SubscriptionId " | " $_.TenantId " | " $_.Environment
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
         
         Import-Module AzureAD -UseWindowsPowerShell
-        $ENV:AzAu_CertificateThumbprint = "E3CDC44C497E965617915BEDEF8A03B258ADD400"
-        $ENV:AzAu_ApplicationId = "2870da78-0ab1-4046-8e95-7a4ee7dc440d"
-        $ENV:AzAu_ConnectionString = "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $_.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
