@@ -20,20 +20,13 @@ $WarningPreference = "SilentlyContinue"
 
 Write-Host $currentUTCtime
 
-$TMP_01 = "E3CDC44C497E965617915BEDEF8A03B258ADD400"
-$TMP_02 = "2870da78-0ab1-4046-8e95-7a4ee7dc440d"
-$TMP_03 = "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
-$TMP_04 = "DefaultEndpointsProtocol=https;AccountName=orionazreport01;AccountKey=nAW+PdKp8cPy0pBn4zCaR1NBV6uimiG7/pk83Yyg0qihPup7DgfGsbmhB8glbU5hdqPOUDFt/tsSTFXxBBPlOw==;EndpointSuffix=core.windows.net"
-$TMP_05 = "https://outlook.office.com/webhook/c2e8910e-c4d5-4dbc-9206-3ee8d5b2060b@16f15083-eb69-41dd-8f91-3d0997ce821b/IncomingWebhook/16acab8d160b4da9bd77f50e3cff1744/d7320306-83c3-44ce-b595-f2030d943140"
-$TMP_06 = "https://orionazreport02.vault.azure.net/secrets/AzAuPowerBIReport/5f5eeb6c52a345a2ac99b65d2c71a339"
-
-$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $TMP_04
+$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
 
 Write-Host "Control 0"
 
-$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $TMP_03
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX -ErrorAction SilentlyContinue
 $OUT_DB_TBL_SUB | ForEach-Object -Parallel {
     $OUT_TBL_CTX = New-AzStorageContext -ConnectionString "DefaultEndpointsProtocol=https;AccountName=orionazreport02;AccountKey=3RTD51FviKOrg2kTg+eQzibQWGwvI/SMmaSOcffdjE1/uktSsJl9Qt6L4E9j2jSHBbHzBMoEfDyaHeUZlU6tQw==;EndpointSuffix=core.windows.net"
@@ -51,7 +44,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     #region                                 Login process
     ################################################################################################
     Write-Host "Control 1"
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
     ################################################################################################
@@ -71,7 +64,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         ################################################################################################
         
         Import-Module AzureAD -UseWindowsPowerShell 
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -TenantId $SUB.TenantId
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
 
@@ -97,7 +90,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             #region                           Master Tables preparation
             ################################################################################################
 
-            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $TMP_03
+            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 
             Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
 
@@ -1211,7 +1204,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 },
                 @{
                     "name"  = "URL de Reporte"
-                    "value" = ('<a href=' + $TMP_06 + '>AzAutomaton - PowerBI Report</a>')
+                    "value" = ('<a href=' + $ENV:AzAu_PowerBIReport + '>AzAutomaton - PowerBI Report</a>')
                 }
             )
                     "markdown" = $false
@@ -1222,7 +1215,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
 
     $parameters = @{
-    "URI"         = $TMP_05
+    "URI"         = $ENV:AzAu_TeamsConnection
     "Method"      = 'POST'
     "Body"        = $TeamMessageBody
     "ContentType" = 'application/json'
