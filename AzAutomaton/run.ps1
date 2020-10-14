@@ -509,6 +509,13 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     $FD_SIG = "Undefined"
                 }
 
+                if(!$WR_BAR){
+                    $USR_DIS = "Unknown"
+                }
+                else{
+                    $USR_DIS = $USR.DisplayName
+                }
+
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_PER.CloudTable `
@@ -518,7 +525,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "RoleAssignmentId" = $USR.RoleAssignmentId;
                         "Scope" = $USR.Scope;
                         "ScopeLevel" = $FD_SCP;
-                        "DisplayName" = $USR.DisplayName;
+                        "DisplayName" = $USR_DIS;
                         "SignInName" = $FD_SIG;
                         "RoleDefinitionName" = $USR.RoleDefinitionName;
                         "RoleDefinitionId" = $USR.RoleDefinitionId;
