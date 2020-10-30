@@ -5,7 +5,7 @@
 param($Timer)
 
 # Get the current universal time in the default string format
-$currentUTCtime = (Get-Date).ToUniversalTime()
+$currentUTCtime = Get-Date
 
 # The 'IsPastDue' porperty is 'true' when the current function invocation is later than scheduled.
 if ($Timer.IsPastDue) {
