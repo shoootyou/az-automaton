@@ -4,6 +4,4 @@ obj
 appsettings.json
 local.settings.json
 dev/
-Modules/
 .vscode/
-AzPartner/
