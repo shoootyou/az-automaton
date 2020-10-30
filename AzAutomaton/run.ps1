@@ -1267,6 +1267,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                  Azure Function - Teams reporting
     ################################################################################################
+    Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
 }
 
 
