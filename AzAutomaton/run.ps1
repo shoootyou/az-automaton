@@ -738,6 +738,20 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         $OS_STO = $IN_FIR.Substring(0,$IN_FIR.IndexOf("."))
                         $OS_VHD = $OS_PAT.Substring($OS_PAT.LastIndexOf("/")+1)
                     }
+                    if($null -eq $CMP_INF.StorageProfile.ImageReference.Publisher){
+                        $OSPublisher = "Not defined"
+                        $OSOffer = "Not defined"
+                        $OSSku = "Not defined"
+                        $OSVersion = "Not defined"
+                        $OSExactVersion = "Not defined"
+                    }
+                    else{
+                        $OSPublisher = $CMP_INF.StorageProfile.ImageReference.Publisher
+                        $OSOffer = $CMP_INF.StorageProfile.ImageReference.Offer
+                        $OSSku = $CMP_INF.StorageProfile.ImageReference.Sku
+                        $OSVersion = $CMP_INF.StorageProfile.ImageReference.Version
+                        $OSExactVersion = $CMP_INF.StorageProfile.ImageReference.ExactVersion
+                    }
                     
                     #endregion comprobaciones internas de virtual machines
                     Add-AzTableRow `
@@ -758,11 +772,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             "ComputerName" = $CMP_INF.OSProfile.ComputerName;
                             "AdminUsername" = $CMP_INF.OSProfile.AdminUsername;
                             "OperatingSystem" = $SO_CONFIG;
-                            "OperatingSystemPublisher" = $CMP_INF.StorageProfile.ImageReference.Publisher;
-                            "OperatingSystemOffer" = $CMP_INF.StorageProfile.ImageReference.Offer;
-                            "OperatingSystemSku" = $CMP_INF.StorageProfile.ImageReference.Sku;
-                            "OperatingSystemVersion" = $CMP_INF.StorageProfile.ImageReference.Version;
-                            "OperatingSystemExactVersion" = $CMP_INF.StorageProfile.ImageReference.ExactVersion;
+                            "OperatingSystemPublisher" = $OSPublisher;
+                            "OperatingSystemOffer" = $OSOffer;
+                            "OperatingSystemSku" = $OSSku;
+                            "OperatingSystemVersion" = $OSVersion;
+                            "OperatingSystemExactVersion" = $OSExactVersion;
                             "ProvisionVMAgent" = $AGN_PRO;
                             "LinuxDisablePasswordAuthentication" = $PSW_AUT;
                             "LinuxSSHPaths" = $SSH_PAT;
