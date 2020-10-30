@@ -888,7 +888,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                                 $CR_REF = "-"
                                 $CR_SRC_ID = "-"
                                 $CR_SRC_RS = $DSK_INF.CreationData.SourceResourceId
-                                $CR_SRC_UN = $DSK_INF.CreationData.SourceUniqueId
+                                if($null -eq $DSK_INF.CreationData.SourceUniqueId){
+                                    $CR_SRC_UN = "-"
+                                }
+                                else{
+                                    $CR_SRC_UN = $DSK_INF.CreationData.SourceUniqueId
+                                }
                                 $CR_UPL = "-"
                             }
                             Empty {  
