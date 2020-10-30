@@ -16,7 +16,7 @@ if ($Timer.IsPastDue) {
 ################################################################################################
 
 $ErrorActionPreference = "Stop"
-$WarningPreference = "Stop"
+$WarningPreference = "SilentlyContinue"
 
 Write-Host $currentUTCtime
 
