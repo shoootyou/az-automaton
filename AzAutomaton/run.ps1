@@ -29,8 +29,8 @@ Write-Host "Control 0"
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
 foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
-    Write-Host "Limpiando tabla: " $_.Name -ForegroundColor DarkGreen 
-    Remove-AzStorageTable –Name $_.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
+    Write-Host "Limpiando tabla: " $ITM_TBL.Name -ForegroundColor DarkGreen 
+    Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
 ################################################################################################
