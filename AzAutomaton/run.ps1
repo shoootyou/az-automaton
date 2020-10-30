@@ -681,7 +681,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         else{
                             $AGN_PRO = "Missing"
                         }                 
-                        $PSW_AUT = $CMP_INF.OSProfile.LinuxConfiguration.DisablePasswordAuthentication
+                        if($null -eq $CMP_INF.OSProfile.LinuxConfiguration.DisablePasswordAuthentication){
+                            $PSW_AUT = "Missing"
+                        }
+                        else{
+                            $PSW_AUT = $CMP_INF.OSProfile.LinuxConfiguration.DisablePasswordAuthentication
+                        }
                         if($CMP_INF.OSProfile.LinuxConfiguration.Ssh){
                             $SSH_PAT = ($CMP_INF.OSProfile.LinuxConfiguration.Ssh.PublicKeys | Select-Object Path).Path -Join ";"
                         }
@@ -752,7 +757,18 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         $OSVersion = $CMP_INF.StorageProfile.ImageReference.Version
                         $OSExactVersion = $CMP_INF.StorageProfile.ImageReference.ExactVersion
                     }
-                    
+                    if($null -eq $CMP_INF.OSProfile.ComputerName){
+                        $CP_NAME = "Missing"
+                    }
+                    else{
+                        $CP_NAME = $CMP_INF.OSProfile.ComputerName
+                    }
+                    if($null -eq $CMP_INF.OSProfile.AdminUsername){
+                        $OS_ADM = "Missing"
+                    }else{
+                        $OS_ADM = $CMP_INF.OSProfile.AdminUsername
+                    }
+
                     #endregion comprobaciones internas de virtual machines
                     Add-AzTableRow `
                         -UpdateExisting `
@@ -769,8 +785,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             "BootDiagnostics" = $BOT_ENA;
                             "BootDiagnosticsStorage" = $BOT_STO;
                             "VmSize" = $CMP_INF.HardwareProfile.VmSize;
-                            "ComputerName" = $CMP_INF.OSProfile.ComputerName;
-                            "AdminUsername" = $CMP_INF.OSProfile.AdminUsername;
+                            "ComputerName" = $CP_NAME;
+                            "AdminUsername" = $OS_ADM;
                             "OperatingSystem" = $SO_CONFIG;
                             "OperatingSystemPublisher" = $OSPublisher;
                             "OperatingSystemOffer" = $OSOffer;
