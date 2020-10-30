@@ -15,8 +15,8 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
-$ErrorActionPreference = "SilentlyContinue"
-$WarningPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
+$WarningPreference = "Stop"
 
 Write-Host $currentUTCtime
 
