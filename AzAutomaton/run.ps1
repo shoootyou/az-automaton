@@ -27,10 +27,9 @@ $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey
 Write-Host "Control 0"
 
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
-$OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX -ErrorAction SilentlyContinue
-$OUT_DB_TBL_SUB | ForEach-Object -Parallel {
-    $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
-    Write-Host $_.Name
+$OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
+foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
+    Write-Host "Limpiando tabla: " $_.Name -ForegroundColor DarkGreen 
     Remove-AzStorageTable –Name $_.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
@@ -43,7 +42,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Login process
     ################################################################################################
-    Write-Host "Control 1"
+    #Write-Host "Control 1"
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
@@ -57,8 +56,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     #region                                 Process Section
     ################################################################################################
     foreach ($SUB in $COR_AZ_SUB_ALL){
-        Write-Host "Control 2"
-        Write-Host $MAS_CLI.RowKey " | " $SUB.Name " | " $SUB.SubscriptionId " | " $SUB.TenantId 
+        #Write-Host "Control 2"
+        Write-Host "Trabajando en: " $MAS_CLI.RowKey " | " $SUB.Name " | " $SUB.SubscriptionId " | " $SUB.TenantId -ForegroundColor DarkGreen
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
