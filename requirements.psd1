@@ -2,8 +2,12 @@
 # See https://aka.ms/functionsmanageddependency for additional information.
 #
 @{
-    'Az' = '5.*';
-    'AzTable' = '2.*';
-    'Az.Security' = '0.*';
-    'AzureAD' = '2.*'
+    'Az.Accounts' = '1.9.5';
+    'Az.Advisor' = '1.1.1';
+    'Az.Compute' = '4.5.0';
+    'Az.Security' = '0.8.0';
+    'Az.Sql' = '2.11.0';
+    'Az.Storage' = '2.7.0';
+    'AzTable' = '2.0.3';
+    'AzureAD' = '2.0.2.118'
 }
