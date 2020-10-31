@@ -25,14 +25,14 @@ $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclie
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
 
 Write-Host "Control 0"
-
+<#
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
 foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
     Write-Host "Limpiando tabla: " $ITM_TBL.Name -ForegroundColor DarkGreen 
     Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
-
+#>
 Import-Module AzureAD -UseWindowsPowerShell 
 Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
 
@@ -70,7 +70,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
-        
+        $ITM_SUB
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
@@ -81,7 +81,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
         $WR_BAR = $ITM_SUB.Name
         Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $ITM_SUB.SubscriptionId -ForegroundColor DarkGray
-        
+       <# 
         if($ITM_SUB.State -ne "Enabled" -or $ITM_SUB.Name -like "*Azure Active Directory"){
             if($ITM_SUB.Name -like "*Azure Active Directory"){
                 Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
@@ -1213,14 +1213,14 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
             
             #endregion informacion de  Azure SQL Database
-        }
+        }#>
         $GBL_IN_SUB_CNT++
     }
     ################################################################################################
     #endregion                              Process Section
     ################################################################################################
 
-    ################################################################################################
+    <################################################################################################
     #region                     Azure Function - Teams reporting
     ################################################################################################
 
@@ -1274,7 +1274,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
     ################################################################################################
     #endregion                  Azure Function - Teams reporting
-    ################################################################################################
+    ################################################################################################>
     
 }
 Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
