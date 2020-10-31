@@ -15,6 +15,20 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
+$ErrorActionPreference = "Stop"
+$WarningPreference = "SilentlyContinue"
+
+Write-Host $currentUTCtime
+
+$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
+$INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
+$INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
+
+Write-Host "Control 0"
+
+Import-Module AzureAD -UseWindowsPowerShell 
+Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
+
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     
     ################################################################################################
