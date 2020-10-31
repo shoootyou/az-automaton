@@ -36,7 +36,6 @@ foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
 Import-Module AzureAD -UseWindowsPowerShell 
 Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
 
-
 ################################################################################################
 #endregion                         Get Client information
 ################################################################################################
@@ -46,13 +45,14 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Login process
     ################################################################################################
-    
+
     Remove-Variable ITM_SUB -ErrorAction SilentlyContinue
     Remove-Variable COR_AZ_SUB_ALL -ErrorAction SilentlyContinue
     Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
     Write-Host "Control 1"
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_RES_ALL
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
     ################################################################################################
@@ -60,7 +60,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
 
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
-
+    $COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
