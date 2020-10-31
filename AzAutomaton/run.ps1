@@ -43,16 +43,16 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
     Write-Host "Control 1"
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -Tenant $MAS_CLI.TenantId -ServicePrincipal
     #$COR_AZ_RES_ALL
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
-        
+        $TNT_ID
+    }
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
     Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $COR_AZ_RES_ALL.Context.Tenant.Id | Select-Object *
-    $COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
@@ -65,77 +65,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         $ITM_SUB
         Import-Module AzureAD -UseWindowsPowerShell 
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
-        $GBL_IN_FOR_CNT = 1
-        $GBL_IN_SUB_CNT = 0
 
-        ################################################################################################
-        #endregion                   Initialization Variables and Information
-        ################################################################################################
-
-        $WR_BAR = $ITM_SUB.Name
-        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $ITM_SUB.SubscriptionId -ForegroundColor DarkGray
-
-        $GBL_IN_SUB_CNT++
     }
     ################################################################################################
     #endregion                              Process Section
     ################################################################################################
 
-    <################################################################################################
-    #region                     Azure Function - Teams reporting
-    ################################################################################################
-
-    $JSONBody = [PSCustomObject][Ordered]@{
-    "@type"      = "MessageCard"
-    "@context"   = "http://schema.org/extensions"
-    "summary"    = "AzAutomaton"
-    "themeColor" = '0078D7'
-    "sections"   = @(
-        @{
-            "activityTitle"    = "<h1>Actualizacion de reporte</h1>"
-            "activitySubtitle" = "Se envia actualizacion de reporte de recursos en Azure - Power BI"
-            "activityImage" = "https://cdn0.iconfinder.com/data/icons/website-design-4/467/Protection_icon-512.png"
-            "facts"            = @(
-                @{
-                    "name"  = "Cliente"
-                    "value" = $MAS_CLI.RowKey
-                },
-                @{
-                    "name"  = "Dominio interno"
-                    "value" = $COR_AZ_TNT_ALL.TenantDomain
-                },
-                @{
-                    "name"  = "ID de Tenant (Azure AD)"
-                    "value" = $ITM_SUB.TenantId
-                },
-                @{
-                    "name"  = "Suscripciones revisadas"
-                    "value" = '<blockquote>' + ($COR_AZ_SUB_ALL.Name -join ' <br> ') + '</blockquote>'
-                },
-                @{
-                    "name"  = "URL de Reporte"
-                    "value" = ('<a href=' + $ENV:AzAu_PowerBIReport + '>AzAutomaton - PowerBI Report</a>')
-                }
-            )
-                    "markdown" = $false
-        }
-    )
-    }
-
-    $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
-
-    $parameters = @{
-    "URI"         = $ENV:AzAu_TeamsConnection
-    "Method"      = 'POST'
-    "Body"        = $TeamMessageBody
-    "ContentType" = 'application/json'
-    }
-
-    Invoke-RestMethod @parameters
-
-    ################################################################################################
-    #endregion                  Azure Function - Teams reporting
-    ################################################################################################>
     
 }
 Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
