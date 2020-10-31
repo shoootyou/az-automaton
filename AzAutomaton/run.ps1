@@ -21,6 +21,9 @@ $ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
 
+Import-Module AzureAD -UseWindowsPowerShell 
+Import-Module AzTable
+
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
 $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
@@ -63,7 +66,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         #region                      Initialization Variables and Information
         ################################################################################################
         
-        Import-Module AzureAD -UseWindowsPowerShell 
+        
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
