@@ -48,8 +48,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
-    Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $COR_AZ_RES_ALL.Context.Tenant.Id | Select-Object *
+    #Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
+    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $MAS_CLI.TenantId | Select-Object *
     #$COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
@@ -63,6 +63,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
         $ITM_SUB
+        $COR_AZ_TNT_ALL
 
     }
     ################################################################################################
