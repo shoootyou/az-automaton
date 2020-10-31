@@ -43,7 +43,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
     Write-Host "Control 1"
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $TMP_01 -ApplicationId $TMP_02 -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     #$COR_AZ_RES_ALL
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         $TNT_ID
