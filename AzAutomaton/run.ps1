@@ -41,6 +41,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     
     Write-Host "Control 1"
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $MAS_CLI
     $COR_AZ_RES_ALL
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
@@ -49,7 +50,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $COR_AZ_RES_ALL.Context.Tenant.Id | Select-Object *
-    $COR_AZ_SUB_ALL.TenantId
+    #$COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
