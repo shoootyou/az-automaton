@@ -18,7 +18,6 @@ if ($Timer.IsPastDue) {
 Clear-Host
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
-$ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
 
