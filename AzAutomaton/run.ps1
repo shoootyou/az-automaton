@@ -15,8 +15,8 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
-$ErrorActionPreference = "Stop"
-$WarningPreference = "SilentlyContinue"
+#$ErrorActionPreference = "Stop"
+#$WarningPreference = "SilentlyContinue"
 
 Write-Host $currentUTCtime
 
@@ -26,24 +26,25 @@ $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey
 
 Write-Host "Control 0"
 
-Import-Module AzureAD -UseWindowsPowerShell 
-Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
+#Import-Module AzureAD -UseWindowsPowerShell 
+#Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
 
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
-    Clear-AzContext -Force -ErrorAction SilentlyContinue
+    #Clear-AzContext -Force -ErrorAction SilentlyContinue
     ################################################################################################
     #region                                 Login process
     ################################################################################################
 
-    Remove-Variable ITM_SUB -ErrorAction SilentlyContinue
-    Remove-Variable COR_AZ_SUB_ALL -ErrorAction SilentlyContinue
-    Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
+    #Remove-Variable ITM_SUB -ErrorAction SilentlyContinue
+    #Remove-Variable COR_AZ_SUB_ALL -ErrorAction SilentlyContinue
+    #Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
     Write-Host "Control 1"
     $TNT_ID = $MAS_CLI.TenantId
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $TNT_ID -ServicePrincipal
-    $MAS_CLI
-    $COR_AZ_RES_ALL.Context | Select *
+    #$COR_AZ_RES_ALL = 
+    Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $TNT_ID -ServicePrincipal
+    #$MAS_CLI
+    #$COR_AZ_RES_ALL.Context | Select *
     
         
     ################################################################################################
@@ -51,9 +52,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
     Write-Host $MAS_CLI.TenantId
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
+    #$COR_AZ_SUB_ALL = 
+    Get-AzSubscription -TenantId $TNT_ID | Select-Object *
     #$COR_AZ_SUB_ALL.TenantId
-    ################################################################################################
+    <################################################################################################
     #region                                 Process Section
     ################################################################################################
     foreach ($ITM_SUB in $COR_AZ_SUB_ALL){
@@ -70,7 +72,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     }
     ################################################################################################
     #endregion                              Process Section
-    ################################################################################################
+    ################################################################################################>
 
     
 }
