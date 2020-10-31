@@ -8,6 +8,6 @@
     'Az.Security' = '0.8.0';
     'Az.Sql' = '2.11.0';
     'Az.Storage' = '2.7.0';
-    'AzTable' = '2.0.3';
-    'AzureAD' = '2.0.2.118'
+    'AzTable' = '2.*';
+    'AzureAD' = '2.*'
 }
