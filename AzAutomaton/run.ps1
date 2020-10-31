@@ -33,6 +33,10 @@ foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
     Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
+Import-Module AzureAD -UseWindowsPowerShell 
+Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
+
+
 ################################################################################################
 #endregion                         Get Client information
 ################################################################################################
@@ -42,7 +46,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Login process
     ################################################################################################
-    #Write-Host "Control 1"
+    
+    Remove-Variable ITM_SUB -ErrorAction SilentlyContinue
+    Remove-Variable COR_AZ_SUB_ALL -ErrorAction SilentlyContinue
+    Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
+    
+    Write-Host "Control 1"
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
         
@@ -55,15 +64,14 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                                 Process Section
     ################################################################################################
-    foreach ($SUB in $COR_AZ_SUB_ALL){
-        #Write-Host "Control 2"
-        Write-Host "Trabajando en: " $MAS_CLI.RowKey " | " $SUB.Name " | " $SUB.SubscriptionId " | " $SUB.TenantId -ForegroundColor DarkGreen
+    foreach ($ITM_SUB in $COR_AZ_SUB_ALL){
+        Write-Host "Control 2"
+        Write-Host "Trabajando en: " $MAS_CLI.RowKey " | " $ITM_SUB.Name " | " $ITM_SUB.SubscriptionId " | " $ITM_SUB.TenantId -ForegroundColor DarkGreen
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
         
-        Import-Module AzureAD -UseWindowsPowerShell 
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
+        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $ITM_SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
 
@@ -71,11 +79,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         #endregion                   Initialization Variables and Information
         ################################################################################################
 
-        $WR_BAR = $SUB.Name
-        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $SUB.SubscriptionId -ForegroundColor DarkGray
+        $WR_BAR = $ITM_SUB.Name
+        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $ITM_SUB.SubscriptionId -ForegroundColor DarkGray
         
-        if($SUB.State -ne "Enabled" -or $SUB.Name -like "*Azure Active Directory"){
-            if($SUB.Name -like "*Azure Active Directory"){
+        if($ITM_SUB.State -ne "Enabled" -or $ITM_SUB.Name -like "*Azure Active Directory"){
+            if($ITM_SUB.Name -like "*Azure Active Directory"){
                 Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
             }
             else{
@@ -141,11 +149,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
             #region selección de subscripción y recursos
             Write-Host "    A. Obtencion de informacion de subscripciones y recursos" -ForegroundColor Cyan
-            Select-AzSubscription -Subscription $SUB.SubscriptionId | Out-Null
+            Select-AzSubscription -Subscription $ITM_SUB.SubscriptionId | Out-Null
             $DB_AZ_RES_ALL = Get-AzResource | Select-Object * | Sort-Object Type
             $DB_AZ_RSG_ALL = Get-AzResourceGroup | Select-Object * | Sort-Object Type
-            Write-Host "        Suscription ID   :" $SUB.SubscriptionId -ForegroundColor Green
-            Write-Host "        Suscription Name :" $SUB.Name -ForegroundColor Green
+            Write-Host "        Suscription ID   :" $ITM_SUB.SubscriptionId -ForegroundColor Green
+            Write-Host "        Suscription Name :" $ITM_SUB.Name -ForegroundColor Green
             #endregion selección de subscripción y recursos
 
             #region informacion de las subscripciones
@@ -259,12 +267,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             Add-AzTableRow `
                 -UpdateExisting `
                 -Table $OUT_DB_TBL_SUB.CloudTable `
-                -PartitionKey $SUB.TenantId `
-                -RowKey $SUB.SubscriptionId `
+                -PartitionKey $ITM_SUB.TenantId `
+                -RowKey $ITM_SUB.SubscriptionId `
                 -Property @{
-                    "Name" = $SUB.Name;
-                    "State" = $SUB.State;
-                    "Environment" = ($SUB.ExtendedProperties | ConvertTo-Json | ConvertFrom-Json).Environment;
+                    "Name" = $ITM_SUB.Name;
+                    "State" = $ITM_SUB.State;
+                    "Environment" = ($ITM_SUB.ExtendedProperties | ConvertTo-Json | ConvertFrom-Json).Environment;
                     "TenantDomain" = $COR_AZ_TNT_ALL.TenantDomain;
                     "TenantName" = $SUB_TNT;
                     "Regions" = $SUB_REG;
@@ -284,7 +292,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     "AzSecurityMCAS" = $SEC_CAS;
                     "AzSecurityWDATP" = $SEC_WDA;
                 } | Out-Null
-            Write-Host "        Se cargo la informacion de la subscripcion " $SUB.SubscriptionId "exitosamente" -ForegroundColor DarkGreen
+            Write-Host "        Se cargo la informacion de la subscripcion " $ITM_SUB.SubscriptionId "exitosamente" -ForegroundColor DarkGreen
 
             #endregion informacion de las subscripciones
 
@@ -327,11 +335,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_REG.CloudTable `
-                    -PartitionKey $SUB.SubscriptionId `
+                    -PartitionKey $ITM_SUB.SubscriptionId `
                     -RowKey $REG.Location `
                     -Property @{
                         "ResourcesNumber" = ($DB_AZ_RES_ALL | Where-Object {$_.Location -eq $REG.Location} | Measure-Object).Count;
-                        "TenantId" = $SUB.TenantId
+                        "TenantId" = $ITM_SUB.TenantId
                     } | Out-Null
             }
             if($DB_AZ_RES_REG.Length){
@@ -352,14 +360,14 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_RSG.CloudTable `
-                    -PartitionKey $SUB.TenantId `
+                    -PartitionKey $ITM_SUB.TenantId `
                     -RowKey $GRP.ResourceGroupName `
                     -Property @{
                         "Location" = $GRP.Location;
                         "ProvisioningState" = $GRP.ProvisioningState;
                         "ResourceId" = $GRP.ResourceId;
                         "ResourcesNumber" = ($DB_AZ_RES_ALL | Where-Object {$_.ResourceGroupName -eq $GRP.ResourceGroupName} | Measure-Object).Count;
-                        "SubscriptionId" = $SUB.SubscriptionId 
+                        "SubscriptionId" = $ITM_SUB.SubscriptionId 
                     } | Out-Null
             }
             Write-Host "        Se cargaron " $DB_AZ_RSG_ALL.Length " grupos de recursos exitosamente" -ForegroundColor DarkGreen
@@ -382,7 +390,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_RES.CloudTable `
-                    -PartitionKey $SUB.TenantId `
+                    -PartitionKey $ITM_SUB.TenantId `
                     -RowKey $WR_BAR `
                     -Property @{
                         "Location" = $RES.Location;
@@ -393,7 +401,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "ResourceId" = $RES.ResourceId.Substring($RES.ResourceId.IndexOf("resourceGroups")+15);
                         "ResourceName" = $RES.ResourceId.Substring($RES.ResourceId.LastIndexOf("/")+1);
                         "ParentResource" = $PAR_RES;
-                        "SubscriptionId" = $SUB.SubscriptionId;
+                        "SubscriptionId" = $ITM_SUB.SubscriptionId;
                         "ResourceGroupName" = $RES.ResourceGroupName
                     } | Out-Null
                 $GBL_IN_FOR_CNT++
@@ -431,7 +439,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_REC.CloudTable `
-                    -PartitionKey $SUB.TenantId `
+                    -PartitionKey $ITM_SUB.TenantId `
                     -RowKey $WR_BAR `
                     -Property @{
                         "Problem" = $REC.ShortDescription.Problem;
@@ -443,7 +451,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "ImpactedSubType" = $IM_SBT;
                         "Impact" = $REC.Impact;
                         "LastUpdated" = $REC.LastUpdated.DateTime;
-                        "SubscriptionId" = $SUB.SubscriptionId;
+                        "SubscriptionId" = $ITM_SUB.SubscriptionId;
                         "Category" = $REC.Category
                     } | Out-Null
                 $GBL_IN_FOR_CNT++
@@ -518,7 +526,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_PER.CloudTable `
-                    -PartitionKey $SUB.TenantId `
+                    -PartitionKey $ITM_SUB.TenantId `
                     -RowKey $FD_ROW `
                     -Property @{
                         "RoleAssignmentId" = $USR.RoleAssignmentId;
@@ -531,7 +539,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "CanDelegate" = $USR.CanDelegate;
                         "ObjectType" = $USR.ObjectType;
                         "UserType" = $FS_TYP;
-                        "SubscriptionId" = $SUB.SubscriptionId
+                        "SubscriptionId" = $ITM_SUB.SubscriptionId
                     } | Out-Null
                 $GBL_IN_FOR_CNT++
                 
@@ -602,7 +610,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     Add-AzTableRow `
                         -UpdateExisting `
                         -Table $OUT_DB_TBL_STO.CloudTable `
-                        -PartitionKey $SUB.SubscriptionId `
+                        -PartitionKey $ITM_SUB.SubscriptionId `
                         -RowKey $STO_INF.StorageAccountName `
                         -Property @{
                             "ResourceGroupName" = $STO_INF.ResourceGroupName;
@@ -628,7 +636,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             "NetworkRuleSetVirtualNetworkRules" = $RL_VNT;
                             "NetworkRuleSetVirtualNetworkRulesDetails" = $DF_VNT;
                             "Encryption" = $STO_INF.Encryption.KeySource;
-                            "TenantId" = $SUB.TenantId
+                            "TenantId" = $ITM_SUB.TenantId
                         } | Out-Null
                     $GBL_IN_FOR_CNT++
 
@@ -772,10 +780,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     Add-AzTableRow `
                         -UpdateExisting `
                         -Table $OUT_DB_TBL_CMP.CloudTable `
-                        -PartitionKey $SUB.SubscriptionId `
+                        -PartitionKey $ITM_SUB.SubscriptionId `
                         -RowKey $CMP_INF.VmId `
                         -Property @{
-                            "TenantId" = $SUB.TenantId;
+                            "TenantId" = $ITM_SUB.TenantId;
                             "ResourceGroupName" = $CMP_INF.ResourceGroupName;
                             "Id" = $CMP_INF.Id;
                             "Name" = $CMP_INF.Name;
@@ -921,10 +929,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             Add-AzTableRow `
                             -UpdateExisting `
                             -Table $OUT_DB_TBL_DSU.CloudTable `
-                            -PartitionKey $SUB.SubscriptionId `
+                            -PartitionKey $ITM_SUB.SubscriptionId `
                             -RowKey $DSK_INF.Name `
                             -Property @{
-                                "TenantId" = $SUB.TenantId;
+                                "TenantId" = $ITM_SUB.TenantId;
                                 "ResourceGroupName" = $DSK_INF.ResourceGroupName;
                                 "ManagedBy" = $BY_MGM;
                                 "SkuName" = $DSK_INF.Sku.Name;
@@ -964,10 +972,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             Add-AzTableRow `
                             -UpdateExisting `
                             -Table $OUT_DB_TBL_DSK.CloudTable `
-                            -PartitionKey $SUB.SubscriptionId `
+                            -PartitionKey $ITM_SUB.SubscriptionId `
                             -RowKey $DSK_INF.Name `
                             -Property @{
-                                "TenantId" = $SUB.TenantId;
+                                "TenantId" = $ITM_SUB.TenantId;
                                 "ResourceGroupName" = $DSK_INF.ResourceGroupName;
                                 "ManagedBy" = $BY_MGM;
                                 "SkuName" = $DSK_INF.Sku.Name;
@@ -1087,10 +1095,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_SQLSRV.CloudTable `
-                    -PartitionKey $SUB.SubscriptionId `
+                    -PartitionKey $ITM_SUB.SubscriptionId `
                     -RowKey $SQLSRV_INF.ServerName `
                     -Property @{
-                        "TenantId" = $SUB.TenantId;
+                        "TenantId" = $ITM_SUB.TenantId;
                         "ResourceGroupName" = $SQLSRV_INF.ResourceGroupName;
                         "Location" = $SQLSRV_INF.Location;
                         "SqlAdministratorLogin" = $SQLSRV_INF.SqlAdministratorLogin;
@@ -1153,10 +1161,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     Add-AzTableRow `
                     -UpdateExisting `
                     -Table $OUT_DB_TBL_SQLDB.CloudTable `
-                    -PartitionKey $SUB.SubscriptionId `
+                    -PartitionKey $ITM_SUB.SubscriptionId `
                     -RowKey $SQLDB_INF.DatabaseId `
                     -Property @{
-                        "TenantId" = $SUB.TenantId;
+                        "TenantId" = $ITM_SUB.TenantId;
                         "ResourceGroupName" = $SQLDB_INF.ResourceGroupName;
                         "ServerName" = $SQLDB_INF.ServerName;
                         "ServerFQDN" = ($SQLDB_INF.ServerName + ".database.windows.net");
@@ -1237,7 +1245,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 },
                 @{
                     "name"  = "ID de Tenant (Azure AD)"
-                    "value" = $SUB.TenantId
+                    "value" = $ITM_SUB.TenantId
                 },
                 @{
                     "name"  = "Suscripciones revisadas"
@@ -1267,7 +1275,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                  Azure Function - Teams reporting
     ################################################################################################
-    Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
+    
 }
-
-
+Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
