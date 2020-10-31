@@ -30,7 +30,7 @@ Import-Module AzureAD -UseWindowsPowerShell
 Remove-Variable MAS_CLI -ErrorAction SilentlyContinue
 
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
-    
+    Clear-AzContext -Force -ErrorAction SilentlyContinue
     ################################################################################################
     #region                                 Login process
     ################################################################################################
