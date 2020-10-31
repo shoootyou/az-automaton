@@ -40,17 +40,18 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
     Write-Host "Control 1"
-    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $MAS_CLI.TenantId -ServicePrincipal
+    $TNT_ID = $MAS_CLI.TenantId
+    $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $TNT_ID -ServicePrincipal
     $MAS_CLI
     $COR_AZ_RES_ALL.Context | Select *
-    $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
+    
         
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
     #Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
     Write-Host $MAS_CLI.TenantId
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $MAS_CLI.TenantId | Select-Object *
+    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
     #$COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
