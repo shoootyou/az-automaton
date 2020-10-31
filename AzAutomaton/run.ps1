@@ -58,8 +58,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
-
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
+    Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
+    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $COR_AZ_RES_ALL.Context.Tenant.Id | Select-Object *
     $COR_AZ_SUB_ALL.TenantId
     ################################################################################################
     #region                                 Process Section
