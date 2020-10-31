@@ -42,20 +42,21 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     Remove-Variable COR_AZ_SUB_ALL -ErrorAction SilentlyContinue
     Remove-Variable COR_AZ_RES_ALL -ErrorAction SilentlyContinue
     
-    Write-Host "Control 1"
+    #Write-Host "Control 1"
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     #$COR_AZ_RES_ALL
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
-        $TNT_ID
+    #$TNT_ID
     
-    <################################################################################################
+    ################################################################################################
     #endregion                              Login process
     ################################################################################################
     Set-AzContext -Tenant $COR_AZ_RES_ALL.Context.Tenant.Id
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $COR_AZ_RES_ALL.Context.Tenant.Id  | Select-Object *
+    $COR_AZ_SUB_ALL
     ################################################################################################
     #region                                 Process Section
-    ################################################################################################
+    <################################################################################################
     foreach ($ITM_SUB in $COR_AZ_SUB_ALL){
         Write-Host "Control 2"
         Write-Host "Trabajando en: " $MAS_CLI.RowKey " | " $ITM_SUB.Name " | " $ITM_SUB.SubscriptionId " | " $ITM_SUB.TenantId -ForegroundColor DarkGreen
