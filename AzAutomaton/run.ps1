@@ -21,8 +21,14 @@ $ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
 
-Import-Module AzureAD -UseWindowsPowerShell 
+Import-Module Az.Accounts
+Import-Module Az.Advisor
+Import-Module Az.Compute
+Import-Module Az.Security
+Import-Module Az.Sql
+Import-Module Az.Storage
 Import-Module AzTable
+Import-Module AzureAD -UseWindowsPowerShell 
 
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
