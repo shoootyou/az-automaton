@@ -21,6 +21,7 @@ $ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
 
+Remove-Module Az.Accounts 
 Import-Module Az.Accounts -RequiredVersion 1.9.5
 Import-Module Az.Advisor
 Import-Module Az.Compute
