@@ -15,6 +15,19 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
+
+$AI = "D:\home\site\wwwroot\extensions\Microsoft.ApplicationInsights\Microsoft.ApplicationInsights.dll"
+[Reflection.Assembly]::LoadFile($AI)
+
+$InstrumentationKey = "b8471ce1-d516-48cc-bc44-62b4f43d7eef"
+$TelClient = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
+$TelClient.InstrumentationKey = $InstrumentationKey
+$TelClient.TrackEvent("Tracking event inside Azure Funcion")
+$TelClient.Flush()
+
+break
+
+
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
