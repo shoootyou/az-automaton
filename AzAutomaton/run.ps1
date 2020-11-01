@@ -16,8 +16,9 @@ if ($Timer.IsPastDue) {
 $APP_INS_EVT = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
 $APP_INS_EVT.InstrumentationKey = $ENV:AzAu_ApplicationInsightsKey
 $APP_INS_MAS = "AzAutomaton,"
+$APP_INS_GID = (New-Guid).Guid.ToString()
 $APP_INS_PHA = "Initialization,"
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Startup," + $currentUTCtime.ToShortDateString() + "-" + $currentUTCtime.ToShortTimeString())
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Startup," + $currentUTCtime.ToShortDateString() + "-" + $currentUTCtime.ToShortTimeString())
 
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
@@ -31,7 +32,7 @@ Import-Module AzureAD -UseWindowsPowerShell
 
 $MOD_LST = Get-Module | Select-Object Name, Version
 foreach ($MOD in $MOD_LST) {
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
 }
 
 ################################################################################################
@@ -51,7 +52,7 @@ $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
 foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "CleanUp," + $ITM_TBL.Name)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "CleanUp," + $ITM_TBL.Name)
     Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
@@ -63,42 +64,42 @@ if(!$OUT_DB_TBL_SUB){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Subscription")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "Subscription")
 
 $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RSG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "ResourcesGroups")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "ResourcesGroups")
 
 $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Regions")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "Regions")
 
 $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RES){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Resources")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "Resources")
 
 $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REC){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "AzAdvisor")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "AzAdvisor")
 
 $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_PER){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Permissions (RBAC)")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Creation finished," + "Permissions (RBAC)")
 
 $APP_INS_EVT.Flush()
 break
