@@ -12,6 +12,16 @@
 # Authenticate with Azure PowerShell using MSI.
 # Remove this if you are not planning on using MSI or Azure PowerShell.
 
+Remove-Module Az.Accounts 
+Import-Module Az.Accounts -RequiredVersion 1.9.5 -Force
+Import-Module Az.Advisor
+Import-Module Az.Compute
+Import-Module Az.Security
+Import-Module Az.Sql
+Import-Module Az.Storage
+Import-Module AzTable
+Import-Module AzureAD -UseWindowsPowerShell
+
 if ($env:MSI_SECRET -and (Get-Module -ListAvailable Az.Accounts)) {
     Connect-AzAccount -Identity
 }

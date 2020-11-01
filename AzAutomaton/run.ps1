@@ -21,6 +21,8 @@ $ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
 
+<#
+
 Remove-Module Az.Accounts 
 Import-Module Az.Accounts -RequiredVersion 1.9.5 -Force
 Import-Module Az.Advisor
@@ -29,7 +31,9 @@ Import-Module Az.Security
 Import-Module Az.Sql
 Import-Module Az.Storage
 Import-Module AzTable
-Import-Module AzureAD -UseWindowsPowerShell
+Import-Module AzureAD -UseWindowsPowerShell 
+
+#>
 
 $MOD_LST = Get-Module | Select-Object Name, Version
 foreach ($MOD in $MOD_LST) {
