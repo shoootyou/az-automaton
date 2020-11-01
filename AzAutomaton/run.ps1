@@ -11,14 +11,12 @@ $currentUTCtime = Get-Date
 if ($Timer.IsPastDue) {
     Write-Host "PowerShell timer is running late!"
 }
-################################################################################################
-#endregion                     Azure Function - Initialization
-################################################################################################
 
 [Reflection.Assembly]::LoadFile($ENV:AzAu_ApplicationInsightsTool)
-
 $APP_INS_EVT = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
 $APP_INS_EVT.InstrumentationKey = $ENV:AzAu_ApplicationInsightsKey
+$APP_INS_MAS = "AzAutomaton,"
+$APP_INS_PHA = "Initialization,"
 
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
@@ -31,76 +29,79 @@ Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
 
 $MOD_LST = Get-Module | Select-Object Name, Version
-$APP_INS_EVT.TrackEvent("A,Loading PowerShell Modules")
 foreach ($MOD in $MOD_LST) {
-    Write-Host $MOD.Name "," $MOD.Version
-    $APP_INS_EVT.TrackEvent("A," + $MOD.Name + "," + $MOD.Version)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
 }
 
-break
-
-$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
-$INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
-$INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
-
-Write-Host "Control 0"
-
-$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
-$OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
-foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
-    Write-Host "Limpiando tabla: " $ITM_TBL.Name -ForegroundColor DarkGreen 
-    Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
-}
+################################################################################################
+#endregion                     Azure Function - Initialization
+################################################################################################
 
 ################################################################################################
 #region                           Master Tables preparation
 ################################################################################################
 
-$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+$APP_INS_PHA = "Master Tables"
 
-Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
+$INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
+$INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
+$INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
+
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+$OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
+foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "CleanUp," + $ITM_TBL.Name)
+    Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
+}
+
+#region Master tables creation after clean up previous information
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 
 $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_SUB){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
 }
-Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Subscription")
 
 $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RSG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
 }
-Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "ResourcesGroups")
 
 $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
 }
-Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Regions")
 
 $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RES){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
 }
-Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Resources")
 
 $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REC){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
 }
-Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "AzAdvisor")
 
 $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_PER){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
 }
-Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Creation finished," + "Permissions (RBAC)")
+
+$APP_INS_EVT.Flush()
+break
+#endregion Master tables creation after clean up previous information
 
 ################################################################################################
 #endregion                        Master Tables preparation
