@@ -32,7 +32,7 @@ Import-Module AzureAD -UseWindowsPowerShell
 
 $MOD_LST = Get-Module | Select-Object Name, Version
 foreach ($MOD in $MOD_LST) {
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
 }
 
 ################################################################################################
