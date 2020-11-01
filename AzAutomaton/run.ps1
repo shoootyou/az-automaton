@@ -30,7 +30,7 @@ Import-Module Az.Storage
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell
 
-Get-Module | Select-Object Name,Version
+Get-Module | Select-Object Name, Version
 
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
