@@ -15,18 +15,10 @@ if ($Timer.IsPastDue) {
 #endregion                     Azure Function - Initialization
 ################################################################################################
 
+[Reflection.Assembly]::LoadFile($ENV:AzAu_ApplicationInsightsTool)
 
-$AI = "D:\home\site\wwwroot\extensions\Microsoft.ApplicationInsights\Microsoft.ApplicationInsights.dll"
-[Reflection.Assembly]::LoadFile($AI)
-
-$InstrumentationKey = "b8471ce1-d516-48cc-bc44-62b4f43d7eef"
-$TelClient = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
-$TelClient.InstrumentationKey = $InstrumentationKey
-$TelClient.TrackEvent("Tracking event inside Azure Funcion")
-$TelClient.Flush()
-
-break
-
+$APP_INS_EVT = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
+$APP_INS_EVT.InstrumentationKey = $ENV:AzAu_ApplicationInsightsKey
 
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
@@ -39,9 +31,13 @@ Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
 
 $MOD_LST = Get-Module | Select-Object Name, Version
+$APP_INS_EVT.TrackEvent("A,Loading PowerShell Modules")
 foreach ($MOD in $MOD_LST) {
-    Write-Host $MOD.Name "," $MOD.Version    
+    Write-Host $MOD.Name "," $MOD.Version
+    $APP_INS_EVT.TrackEvent("A," + $MOD.Name + "," + $MOD.Version)
 }
+
+break
 
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
@@ -1293,4 +1289,4 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
 }
 
-
+$APP_INS_EVT.Flush()
