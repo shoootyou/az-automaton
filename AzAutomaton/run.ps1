@@ -17,6 +17,7 @@ $APP_INS_EVT = New-Object "Microsoft.ApplicationInsights.TelemetryClient"
 $APP_INS_EVT.InstrumentationKey = $ENV:AzAu_ApplicationInsightsKey
 $APP_INS_MAS = "AzAutomaton,"
 $APP_INS_PHA = "Initialization,"
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_PHA + "Startup," + $currentUTCtime.ToShortDateString() + "-" + $currentUTCtime.ToShortTimeString())
 
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
