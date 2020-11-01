@@ -20,6 +20,7 @@ $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
 
 Write-Host $currentUTCtime
+Write-Host (Get-Location)
 
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
@@ -41,6 +42,60 @@ foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
     Write-Host "Limpiando tabla: " $ITM_TBL.Name -ForegroundColor DarkGreen 
     Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
+
+################################################################################################
+#region                           Master Tables preparation
+################################################################################################
+
+$OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
+
+Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
+
+$OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_SUB){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
+}
+Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
+
+$OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_RSG){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
+}
+Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
+
+$OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_REG){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
+}
+Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
+
+$OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_RES){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
+}
+Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
+
+$OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_REC){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
+}
+Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
+
+$OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_PER){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
+}
+Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
+
+################################################################################################
+#endregion                        Master Tables preparation
+################################################################################################
 
 ################################################################################################
 #endregion                         Get Client information
@@ -93,60 +148,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
         }
         else{
-
-            ################################################################################################
-            #region                           Master Tables preparation
-            ################################################################################################
-
-            $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
-
-            Write-Host "1 - Creacion de tablas maestras de recursos" -ForegroundColor DarkGray
-
-            $OUT_DB_TBL_SUB =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_SUB){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
-            }
-            Write-Host "        Tabla de listado de suscripciones creada exitosamente" -ForegroundColor Green
-
-            $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_RSG){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
-            }
-            Write-Host "        Tabla de listado de grupo de recursos creada exitosamente" -ForegroundColor Green
-
-            $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_REG){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
-            }
-            Write-Host "        Tabla de listado de regiones creada exitosamente" -ForegroundColor Green
-
-            $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_RES){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
-            }
-            Write-Host "        Tabla de listado de informacion general de recursos creada exitosamente" -ForegroundColor Green
-
-            $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_REC){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
-            }
-            Write-Host "        Tabla de listado de recomendaciones de Azure Advisor creada exitosamente" -ForegroundColor Green
-
-            $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
-            if(!$OUT_DB_TBL_PER){
-                Start-Sleep -Seconds 10
-                $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
-            }
-            Write-Host "        Tabla de listado de permisos sobre subscripciones creada exitosamente" -ForegroundColor Green
-
-            ################################################################################################
-            #endregion                        Master Tables preparation
-            ################################################################################################
 
             #region selección de subscripción y recursos
             Write-Host "    A. Obtencion de informacion de subscripciones y recursos" -ForegroundColor Cyan
