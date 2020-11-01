@@ -24,9 +24,6 @@ $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
 
-Write-Host $currentUTCtime
-Write-Host (Get-Location)
-
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
 
@@ -102,7 +99,6 @@ if(!$OUT_DB_TBL_PER){
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "Permissions (RBAC)")
 
 $APP_INS_EVT.Flush()
-break
 #endregion Master tables creation after clean up previous information
 
 ################################################################################################
@@ -112,16 +108,16 @@ break
 ################################################################################################
 #endregion                         Get Client information
 ################################################################################################
-
+$APP_INS_PHA = "Get Information,"
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     
     ################################################################################################
     #region                                 Login process
     ################################################################################################
-    #Write-Host "Control 1"
+
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
-        
+
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
@@ -132,42 +128,35 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     #region                                 Process Section
     ################################################################################################
     foreach ($SUB in $COR_AZ_SUB_ALL){
-        #Write-Host "Control 2"
-        Write-Host "Trabajando en: " $MAS_CLI.RowKey " | " $SUB.Name " | " $SUB.SubscriptionId " | " $SUB.TenantId -ForegroundColor DarkGreen
         ################################################################################################
         #region                      Initialization Variables and Information
         ################################################################################################
         
-        
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
+        $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Login," + $MAS_CLI.RowKey + "-" + $SUB.Name)
 
         ################################################################################################
         #endregion                   Initialization Variables and Information
         ################################################################################################
 
         $WR_BAR = $SUB.Name
-        Write-Host $GBL_IN_SUB_CNT "- Inicializacion de datos para subscripcion" $SUB.SubscriptionId -ForegroundColor DarkGray
-        
         if($SUB.State -ne "Enabled" -or $SUB.Name -like "*Azure Active Directory"){
             if($SUB.Name -like "*Azure Active Directory"){
-                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
             }
             else{
-                Write-Host "    A. Suscripcion deshabilitada" -ForegroundColor Cyan    
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
                 Start-Sleep -Seconds 10    
             }
         }
         else{
-
             #region selección de subscripción y recursos
-            Write-Host "    A. Obtencion de informacion de subscripciones y recursos" -ForegroundColor Cyan
             Select-AzSubscription -Subscription $SUB.SubscriptionId | Out-Null
             $DB_AZ_RES_ALL = Get-AzResource | Select-Object * | Sort-Object Type
             $DB_AZ_RSG_ALL = Get-AzResourceGroup | Select-Object * | Sort-Object Type
-            Write-Host "        Suscription ID   :" $SUB.SubscriptionId -ForegroundColor Green
-            Write-Host "        Suscription Name :" $SUB.Name -ForegroundColor Green
+
             #endregion selección de subscripción y recursos
 
             #region informacion de las subscripciones
@@ -276,7 +265,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
             #endregion comprobaciones internas de suscripciones
 
-            Write-Host "    B. Cargando de informacion de subscripcion" -ForegroundColor Cyan
             $SUB_TNT = (Get-AzureADTenantDetail | Select-Object DisplayName).DisplayName
             Add-AzTableRow `
                 -UpdateExisting `
@@ -306,12 +294,11 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     "AzSecurityMCAS" = $SEC_CAS;
                     "AzSecurityWDATP" = $SEC_WDA;
                 } | Out-Null
-            Write-Host "        Se cargo la informacion de la subscripcion " $SUB.SubscriptionId "exitosamente" -ForegroundColor DarkGreen
+            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
 
             #endregion informacion de las subscripciones
 
             #region provisionamiento de tablas de acceso de recursos
-            Write-Host "    C. Creacion de tablas para informacion de recursos" -ForegroundColor Cyan
             $DB_AZ_RES_TYP  = @()
             ($DB_AZ_RES_ALL | Select-Object Type -Unique) | ForEach-Object { $DB_AZ_RES_TYP += $_.Type.Replace("/",".").ToLower()}
             $DB_AZ_RES_TYP = $DB_AZ_RES_TYP | Select-Object -Unique
@@ -323,6 +310,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 if(!$FOR_INT_01){
                     Start-Sleep -Seconds 5
                     $FOR_INT_01 = New-AzStorageTable -Context $OUT_TBL_CTX -Name $FOR_INT_00
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources Tables," + $FOR_INT_01.Name)
                 }
 
                 $FOR_INT_00 = $null
@@ -333,18 +321,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             $FOR_INT_01 = Get-AzStorageTable -Context $OUT_TBL_CTX -Name microsoftcomputedisksu -ErrorAction SilentlyContinue
             if(!$FOR_INT_01){
                 New-AzStorageTable -Context $OUT_TBL_CTX -Name microsoftcomputedisksu
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources Tables," + "microsoftcomputedisksu")
             }
             #endregion creacion de tabla para discos no atachados
-
-            Write-Host "        Se crearon " $DB_AZ_RES_TYP.Length "tablas de forma exitosa" -ForegroundColor DarkGreen
 
             #endregion provisionamiento de tablas de acceso de recursos
             
             #region informacion de las regiones empleadas
             
-            Write-Host "    D. Cargando de informacion de regiones empleadas" -ForegroundColor Cyan
             $DB_AZ_RES_REG = $DB_AZ_RES_ALL | Select-Object Location -Unique
-            
             foreach($REG in $DB_AZ_RES_REG){
                 Add-AzTableRow `
                     -UpdateExisting `
@@ -357,13 +342,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     } | Out-Null
             }
             if($DB_AZ_RES_REG.Length){
-                Write-Host "        Se cargaron " $DB_AZ_RES_REG.Length " regiones exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Regions," + $DB_AZ_RES_REG.Length)
             }
             else{
-                Write-Host "        Se cargaron 1 regiones exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Regions," + "1")
             }
             
-
             #endregion informacion de las regiones empleadas
 
             #region información de grupos de recursos
@@ -390,7 +374,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
             #region información general de recursos
             
-            Write-Host "    F. Cargando de informacion general de recursos" -ForegroundColor Cyan
             $GBL_IN_FOR_CNT = 1
             foreach($RES in $DB_AZ_RES_ALL){
                 $WR_BAR = ($RES.ResourceId.Substring($RES.ResourceId.IndexOf("providers")+10)).Replace("/",".").Replace(" ","_").Replace("#","_")
@@ -421,17 +404,16 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $GBL_IN_FOR_CNT++
             }
             if($DB_AZ_RES_ALL.Count){
-                Write-Host "        Se cargaron " $DB_AZ_RES_ALL.Length " recursos exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources," + $DB_AZ_RES_ALL.Length)
             }
             else{
-                Write-Host "        Se cargaron 1 recursos exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources," + "1")
             }
             $GBL_IN_FOR_CNT = 1
             #endregion información general de recursos
 
             #region información recomendaciones de azure advisor
             
-            Write-Host "    G. Cargando de informacion de recomendaciones de Azure Advisor" -ForegroundColor Cyan
             $DB_AZ_REC_ALL = Get-AzAdvisorRecommendation | Select-Object * | Sort-Object Category
             $GBL_IN_FOR_CNT = 1
             foreach($REC in $DB_AZ_REC_ALL){ 
@@ -472,10 +454,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
 
             if($DB_AZ_REC_ALL.Count){
-                Write-Host "        Se cargaron " $DB_AZ_REC_ALL.Length " recomendaciones exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "AzAdvisor," + $DB_AZ_REC_ALL.Length)
             }
             else{
-                Write-Host "        Se cargaron  1  recomendaciones exitosamente" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "AzAdvisor," + "1")
             }
             
             $GBL_IN_FOR_CNT = 1

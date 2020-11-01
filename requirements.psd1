@@ -11,5 +11,4 @@
     'Az.Storage' = '2.7.0';
     'AzTable' = '2.*';
     'AzureAD' = '2.*'
-    
 }
