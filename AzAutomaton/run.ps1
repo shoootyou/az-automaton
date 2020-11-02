@@ -20,11 +20,11 @@ $APP_INS_GID = (New-Guid).Guid.ToString() + ","
 $APP_INS_PHA = "Initialization,"
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Startup,Done")
 
+Write-Host ($APP_INS_MAS + $APP_INS_GID + (Get-Date).ToString() + ",,," + $APP_INS_PHA + "Startup,Done")
+
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
-
-Write-Host "Working with ID: " $APP_INS_GID "check on Log Analytics."
 
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
@@ -1274,3 +1274,4 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 $APP_INS_PHA = "Finalization,"
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Shutdown,Done")
 $APP_INS_EVT.Flush()
+Write-Host ($APP_INS_MAS + $APP_INS_GID + (Get-Date).ToString() + ",,," + $APP_INS_PHA + "Shutdown,Done")
