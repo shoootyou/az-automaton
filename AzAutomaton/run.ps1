@@ -18,18 +18,20 @@ $APP_INS_EVT.InstrumentationKey = $ENV:AzAu_ApplicationInsightsKey
 $APP_INS_MAS = "AzAutomaton,"
 $APP_INS_GID = (New-Guid).Guid.ToString() + ","
 $APP_INS_PHA = "Initialization,"
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Startup")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + ",Startup,Done")
 
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
+
+Write-Host "Working with ID: " $APP_INS_GID "check on Log Analytics."
 
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
 
 $MOD_LST = Get-Module | Select-Object Name, Version
 foreach ($MOD in $MOD_LST) {
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Load Modules," + $MOD.Name + "-" + $MOD.Version)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Loaded Modules," + $MOD.Name + "-" + $MOD.Version)
 }
 
 ################################################################################################
@@ -49,7 +51,7 @@ $INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
 foreach ($ITM_TBL in $OUT_DB_TBL_SUB) {
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "CleanUp," + $ITM_TBL.Name)
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "CleanUp," + $ITM_TBL.Name)
     Remove-AzStorageTable –Name $ITM_TBL.Name –Context $OUT_TBL_CTX -Confirm:$false -Force -ErrorAction SilentlyContinue
 }
 
@@ -61,42 +63,42 @@ if(!$OUT_DB_TBL_SUB){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_SUB = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersubscription"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "Subscription")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Subscription")
 
 $OUT_DB_TBL_RSG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RSG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RSG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresourcegroup"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "ResourcesGroups")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,ResourcesGroups")
 
 $OUT_DB_TBL_REG =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REG){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REG = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterregions"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "Regions")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Regions")
 
 $OUT_DB_TBL_RES =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_RES){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_RES = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterresources"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "Resources")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Resources")
 
 $OUT_DB_TBL_REC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_REC){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_REC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterrecommendations"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "AzAdvisor")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,AzAdvisor")
 
 $OUT_DB_TBL_PER =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions" -ErrorAction SilentlyContinue
 if(!$OUT_DB_TBL_PER){
     Start-Sleep -Seconds 10
     $OUT_DB_TBL_PER = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterpermissions"
 }
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Creation finished," + "Permissions (RBAC)")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Permissions (RBAC)")
 
 $APP_INS_EVT.Flush()
 #endregion Master tables creation after clean up previous information
@@ -117,12 +119,13 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
     $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
-
+    
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
 
     $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Login,Azure Resources" )
 
     ################################################################################################
     #region                                 Process Section
@@ -135,7 +138,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
-        $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Login," + $MAS_CLI.RowKey + "-" + $SUB.Name)
+        $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Login,Azure AD" )
 
         ################################################################################################
         #endregion                   Initialization Variables and Information
@@ -144,10 +147,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         $WR_BAR = $SUB.Name
         if($SUB.State -ne "Enabled" -or $SUB.Name -like "*Azure Active Directory"){
             if($SUB.Name -like "*Azure Active Directory"){
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,ASM Subscription" )
             }
             else{
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,Disabled" )
                 Start-Sleep -Seconds 10    
             }
         }
@@ -156,7 +159,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             Select-AzSubscription -Subscription $SUB.SubscriptionId | Out-Null
             $DB_AZ_RES_ALL = Get-AzResource | Select-Object * | Sort-Object Type
             $DB_AZ_RSG_ALL = Get-AzResourceGroup | Select-Object * | Sort-Object Type
-
+            
             #endregion selección de subscripción y recursos
 
             #region informacion de las subscripciones
@@ -294,7 +297,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     "AzSecurityMCAS" = $SEC_CAS;
                     "AzSecurityWDATP" = $SEC_WDA;
                 } | Out-Null
-            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Subscription info," + $MAS_CLI.RowKey + "-" + $SUB.Name)
+            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,Enabled" )
 
             #endregion informacion de las subscripciones
 
@@ -310,7 +313,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 if(!$FOR_INT_01){
                     Start-Sleep -Seconds 5
                     $FOR_INT_01 = New-AzStorageTable -Context $OUT_TBL_CTX -Name $FOR_INT_00
-                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources Tables," + $FOR_INT_01.Name)
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources Tables," + $FOR_INT_01.Name)
                 }
 
                 $FOR_INT_00 = $null
@@ -321,7 +324,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             $FOR_INT_01 = Get-AzStorageTable -Context $OUT_TBL_CTX -Name microsoftcomputedisksu -ErrorAction SilentlyContinue
             if(!$FOR_INT_01){
                 New-AzStorageTable -Context $OUT_TBL_CTX -Name microsoftcomputedisksu
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources Tables," + "microsoftcomputedisksu")
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources Tables,microsoftcomputedisksu")
             }
             #endregion creacion de tabla para discos no atachados
 
@@ -342,17 +345,15 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     } | Out-Null
             }
             if($DB_AZ_RES_REG.Length){
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Regions," + $DB_AZ_RES_REG.Length)
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Regions," + $DB_AZ_RES_REG.Length)
             }
             else{
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Regions," + "1")
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Regions,1")
             }
             
             #endregion informacion de las regiones empleadas
 
             #region información de grupos de recursos
-            
-            Write-Host "    E. Cargando de informacion de grupo de recursos empleadas" -ForegroundColor Cyan
             
             foreach($GRP in $DB_AZ_RSG_ALL){
                 Add-AzTableRow `
@@ -368,7 +369,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "SubscriptionId" = $SUB.SubscriptionId 
                     } | Out-Null
             }
-            Write-Host "        Se cargaron " $DB_AZ_RSG_ALL.Length " grupos de recursos exitosamente" -ForegroundColor DarkGreen
+            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resource Group," + $DB_AZ_RSG_ALL.Length)
 
             #endregion información de grupos de recursos
 
@@ -404,10 +405,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $GBL_IN_FOR_CNT++
             }
             if($DB_AZ_RES_ALL.Count){
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources," + $DB_AZ_RES_ALL.Length)
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources," + $DB_AZ_RES_ALL.Length)
             }
             else{
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "Resources," + "1")
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources,1")
             }
             $GBL_IN_FOR_CNT = 1
             #endregion información general de recursos
@@ -454,10 +455,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
 
             if($DB_AZ_REC_ALL.Count){
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "AzAdvisor," + $DB_AZ_REC_ALL.Length)
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "AzAdvisor," + $DB_AZ_RES_ALL.Length)
             }
             else{
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + $APP_INS_PHA + (Get-Date) + "," + "AzAdvisor," + "1")
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "AzAdvisor,1")
             }
             
             $GBL_IN_FOR_CNT = 1
@@ -465,7 +466,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
             #region información de informacion de usuarios administrativos de Azure
                 
-            Write-Host "    H. Cargado de informacion de usuarios administrativos de Azure" -ForegroundColor Cyan
             $DB_AZ_PER_ALL = Get-AzRoleAssignment | Select-Object * | Sort-Object Scope -Descending
             $GBL_IN_FOR_CNT = 1
             foreach($USR in $DB_AZ_PER_ALL){
@@ -540,13 +540,12 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $GBL_IN_FOR_CNT++
                 
             }
-            Write-Host "        Se cargaron " $DB_AZ_PER_ALL.Length " usuarios administrativos exitosamente" -ForegroundColor DarkGreen
+            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "RBAC," + $DB_AZ_PER_ALL.Length)
             $GBL_IN_FOR_CNT = 1
             #endregion información de informacion de usuarios administrativos de Azure
 
             #region informacion de Storages Accounts
                 
-            Write-Host "    I. Cargando de informacion de cuentas de almacenamiento" -ForegroundColor Cyan
             $DB_AZ_STO_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Storage/storageAccounts'} | Select-Object *
             if($DB_AZ_STO_ALL){
                 $OUT_DB_TBL_STO = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_STO_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -638,23 +637,22 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
                 }
                 if($DB_AZ_STO_ALL.Count){
-                    Write-Host "        Se cargaron " $DB_AZ_STO_ALL.Length " cuentas de almacenamiento exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts," + $DB_AZ_STO_ALL.Length)
                 }
                 else{
-                    Write-Host "        Se cargaron  1  cuentas de almacenamiento exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts,1")
                 }
 
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                Write-Host "        No se tienen cuentas de almacenamiento que revisar" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts,0"))
             }
             
             #endregion informacion de Storages Accounts
 
             #region informacion de Virtual Machines
         
-            Write-Host "    J. Cargando de informacion de maquinas virtuales" -ForegroundColor Cyan
             $DB_AZ_CMP_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Compute/virtualMachines'} | Select-Object *
             if($DB_AZ_CMP_ALL){
                 $OUT_DB_TBL_CMP = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_CMP_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -814,22 +812,21 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 
                 }
                 if($DB_AZ_CMP_ALL.Count){
-                    Write-Host "        Se cargaron " $DB_AZ_CMP_ALL.Length " maquinas virtuales exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "VMS," + $DB_AZ_CMP_ALL.Length)
                 }
                 else{
-                    Write-Host "        Se cargaron 1 maquina virtual exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "VMS,1")
                 }
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                Write-Host "        No se tienen maquinas virtuales que revisar" -ForegroundColor DarkGreen    
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "VMS,0")
             }
             
             #endregion informacion de Virtual Machines
 
             #region informacion de Azure Disks
         
-            Write-Host "    K. Cargando de informacion de azure disks" -ForegroundColor Cyan
             $DB_AZ_DSK_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Compute/disks'} | Select-Object *
             if($DB_AZ_DSK_ALL){
                 $OUT_DB_TBL_DSK = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_DSK_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -1012,23 +1009,22 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     }
                 }
                 if($DB_AZ_DSK_ALL.Count){
-                    Write-Host "        Se cargaron " $DB_AZ_DSK_ALL.Length " discos exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Disks," + $DB_AZ_DSK_ALL.Length)
                 }
                 else{
-                    Write-Host "        Se cargaron 1 disco exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Disks,1")
                 }
                 
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                Write-Host "        No se tienen discos que revisar" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Disks,0")
             }
             
             #endregion informacion de Azure Disks
 
             #region informacion de  Azure SQL Server
         
-            Write-Host "    L. Cargando de informacion de Azure SQL Server" -ForegroundColor Cyan
             $DB_AZ_SQLSRV_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Sql/servers'} | Select-Object *
             if($DB_AZ_SQLSRV_ALL){
                 $OUT_DB_TBL_SQLSRV = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_SQLSRV_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -1115,23 +1111,22 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     $GBL_IN_FOR_CNT++
                 }
                 if($DB_AZ_SQLSRV_ALL.Count){
-                    Write-Host "        Se cargaron " $DB_AZ_SQLSRV_ALL.Length " Azure SQL Server exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL," + $DB_AZ_SQLSRV_ALL.Length)
                 }
                 else{
-                    Write-Host "        Se cargaron 1 Azure SQL Server exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL,1")
                 }
                 
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                Write-Host "        No se tienen Azure SQL Server que revisar" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL,0")
             }
             
             #endregion informacion de  Azure SQL Server
         
             #region informacion de  Azure SQL Database
 
-            Write-Host "    L. Cargando de informacion de Azure SQL Database" -ForegroundColor Cyan
             $DB_AZ_SQLDB_ALL = $DB_AZ_RES_ALL | Where-Object {$_.ResourceType -eq 'Microsoft.Sql/servers/databases'} | Select-Object *
             if($DB_AZ_SQLDB_ALL){
                 $OUT_DB_TBL_SQLDB = Get-AzStorageTable -Context $OUT_TBL_CTX -Name ((($DB_AZ_SQLDB_ALL | Select-Object ResourceType -Unique).ResourceType).ToLower().replace(".","").replace("/",""))
@@ -1196,16 +1191,16 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         }
                 }
                 if($DB_AZ_SQLDB_ALL.Count){
-                    Write-Host "        Se cargaron " $DB_AZ_SQLDB_ALL.Length " Azure SQL Database exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL Databases," + $DB_AZ_SQLDB_ALL.Length)
                 }
                 else{
-                    Write-Host "        Se cargaron 1 Azure SQL Database exitosamente" -ForegroundColor DarkGreen
+                    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL Databases,1")
                 }
                 
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                Write-Host "        No se tienen Azure SQL Database que revisar" -ForegroundColor DarkGreen
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL Databases,0")
             }
             
             #endregion informacion de  Azure SQL Database
@@ -1219,6 +1214,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #region                     Azure Function - Teams reporting
     ################################################################################################
+
+    $APP_INS_PHA = "Notification Channel,"
 
     $JSONBody = [PSCustomObject][Ordered]@{
     "@type"      = "MessageCard"
@@ -1267,11 +1264,13 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     }
 
     Invoke-RestMethod @parameters
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Teams, Done")
 
     ################################################################################################
     #endregion                  Azure Function - Teams reporting
     ################################################################################################
-    Write-Host "Proceso finalizado" -ForegroundColor DarkGreen
 }
 
+$APP_INS_PHA = "Finalization,"
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + ",Shutdown,Done")
 $APP_INS_EVT.Flush()
