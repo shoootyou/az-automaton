@@ -1272,5 +1272,5 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
 }
 
 $APP_INS_PHA = "Finalization,"
-$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + ",Shutdown,Done")
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Shutdown,Done")
 $APP_INS_EVT.Flush()
