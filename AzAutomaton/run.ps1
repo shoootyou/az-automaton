@@ -646,7 +646,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $GBL_IN_FOR_CNT = 1
             }
             else{
-                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts,0"))
+                $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts,0")
             }
             
             #endregion informacion de Storages Accounts
