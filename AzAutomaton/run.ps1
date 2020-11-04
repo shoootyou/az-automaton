@@ -26,6 +26,7 @@ $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 $ErrorView = "NormalView"
 
+Get-ChildItem $ENV:AzAu_SupportFunctions | ForEach-Object { Import-Module $_.FullName } 
 Import-Module AzTable
 Import-Module AzureAD -UseWindowsPowerShell 
 
@@ -100,6 +101,13 @@ if(!$OUT_DB_TBL_PER){
 }
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Permissions (RBAC)")
 
+$OUT_DB_TBL_USR =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterusers" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_USR){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_USR = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amasterusers"
+}
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Azure Users")
+
 $APP_INS_EVT.Flush()
 #endregion Master tables creation after clean up previous information
 
@@ -118,14 +126,77 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
 
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
-    $TNT_ID = $COR_AZ_RES_ALL.Context.Tenant.Id
+    $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $MAS_CLI.TenantId
     
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
 
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $TNT_ID | Select-Object *
+    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $MAS_CLI.TenantId | Select-Object *
     $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Login,Azure Resources" )
+
+        ################################################################################################
+    #region                              Azure Users
+    ################################################################################################
+    $DB_AZ_USR_ALL = Get-AzADUser | Select-Object *
+    foreach ($AZ_USR in $DB_AZ_USR_ALL) {
+        #region validaciones de usuarios
+        if($null -eq $AZ_USR.UsageLocation){
+            $AZ_USR_LOC = "Undefined"
+        }
+        else{
+            $AZ_USR_LOC = $AZ_USR.UsageLocation
+        }
+        if($null -eq $AZ_USR.mail){
+            $AZ_USR_MAL = "Undefined"
+        }
+        else{
+            $AZ_USR_MAL = $AZ_USR.Mail
+        }
+        if($null -eq $AZ_USR.Surname){
+            $AZ_USR_SUR = "Undefined"
+        }
+        else{
+            $AZ_USR_SUR = $AZ_USR.Surname
+        }
+        if($null -eq $AZ_USR.GivenName){
+            $AZ_USR_GIV = "Undefined"
+        }
+        else{
+            $AZ_USR_GIV = $AZ_USR.GivenName
+        }
+        if($null -eq $AZ_USR.Type){
+            $AZ_USR_TYP = "Undefined"
+        }
+        else{
+            $AZ_USR_TYP = $AZ_USR.Type
+        }
+        #endregion validaciones de usuarios
+        Add-AzTableRow `
+            -UpdateExisting `
+            -Table $OUT_DB_TBL_USR.CloudTable `
+            -PartitionKey $SUB.SubscriptionId `
+            -RowKey $AZ_USR.UserPrincipalName.Replace("#","_") `
+            -Property @{
+                "UserPrincipalName" = $AZ_USR.UserPrincipalName;
+                "ObjectType"        = $AZ_USR.ObjectType;
+                "UsageLocation"     = $AZ_USR_LOC;
+                "GivenName"         = $AZ_USR_GIV;
+                "Surname"           = $AZ_USR_SUR;
+                "AccountEnabled"    = $AZ_USR.AccountEnabled;
+                "MailNickname"      = $AZ_USR.MailNickname;
+                "Mail"              = $AZ_USR_MAL;
+                "DisplayName"       = $AZ_USR.DisplayName;
+                "Id"                = $AZ_USR.Id;
+                "Type"              = $AZ_USR_TYP;
+                "UserDomain"        = $AZ_USR.UserPrincipalName.Substring($AZ_USR.UserPrincipalName.IndexOf("@")+1)
+            } | Out-Null
+    }
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Azure Users," + $DB_AZ_USR_ALL.Length )
+
+    ################################################################################################
+    #endregion                           Azure Users
+    ################################################################################################
 
     ################################################################################################
     #region                                 Process Section
@@ -135,7 +206,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         #region                      Initialization Variables and Information
         ################################################################################################
         
-        $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $SUB.TenantId
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
         $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Login,Azure AD" )
@@ -518,6 +588,14 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 else{
                     $USR_DIS = $USR.DisplayName
                 }
+                if( $USR.CanDelegate -eq $true -or
+                    $USR.RoleDefinitionName -eq "User Access Administrator" -or
+                    $USR.RoleDefinitionName -eq "Owner"){
+                    $USR_DEL = $true
+                }
+                else{
+                    $USR_DEL = $false
+                }
 
                 Add-AzTableRow `
                     -UpdateExisting `
@@ -532,7 +610,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                         "SignInName" = $FD_SIG;
                         "RoleDefinitionName" = $USR.RoleDefinitionName;
                         "RoleDefinitionId" = $USR.RoleDefinitionId;
-                        "CanDelegate" = $USR.CanDelegate;
+                        "CanDelegate" = $USR_DEL;
                         "ObjectType" = $USR.ObjectType;
                         "UserType" = $FS_TYP;
                         "SubscriptionId" = $SUB.SubscriptionId
@@ -769,6 +847,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     }else{
                         $OS_ADM = $CMP_INF.OSProfile.AdminUsername
                     }
+                    $NET_ADP = $CMP_INF.NetworkProfile.NetworkInterfaces | ForEach-Object { $TM = $null; $TM += (Parse-AzResourceID $_.Id).Resource ; $TM.ToString()}
 
                     #endregion comprobaciones internas de virtual machines
                     Add-AzTableRow `
@@ -805,8 +884,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                             "OperatingSystemDisk" = $OS_PAT;
                             "OperatingSystemStorage" = $OS_STO;
                             "OperatingSystemVHD" = $OS_VHD;
-                            "NumberTags" = ($CMP_INF.Tags.Keys | Measure-Object).Count
-                            
+                            "NumberTags" = ($CMP_INF.Tags.Keys | Measure-Object).Count;
+                            "NetworkInterfaces" = ($NET_ADP -join ",")
                         } | Out-Null
                     $GBL_IN_FOR_CNT++
 
