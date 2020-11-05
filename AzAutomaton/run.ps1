@@ -108,6 +108,13 @@ if(!$OUT_DB_TBL_USR){
 }
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Azure Users")
 
+$OUT_DB_TBL_ASC =  Get-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersecuritycenter" -ErrorAction SilentlyContinue
+if(!$OUT_DB_TBL_ASC){
+    Start-Sleep -Seconds 10
+    $OUT_DB_TBL_ASC = New-AzStorageTable -Context $OUT_TBL_CTX -Name "amastersecuritycenter"
+}
+$APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Creation finished,Azure Defender")
+
 $APP_INS_EVT.Flush()
 #endregion Master tables creation after clean up previous information
 
@@ -116,7 +123,7 @@ $APP_INS_EVT.Flush()
 ################################################################################################
 
 ################################################################################################
-#endregion                         Get Client information
+#region                         Get Client information
 ################################################################################################
 $APP_INS_PHA = "Get Information,"
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
@@ -126,16 +133,17 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
 
     $COR_AZ_RES_ALL = Connect-AzAccount -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -Tenant $MAS_CLI.TenantId -ServicePrincipal
+    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $MAS_CLI.TenantId | Select-Object *
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Login,Azure Resources" )
+
     $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $MAS_CLI.TenantId
-    
+    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Login,Azure AD" )
+
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
 
-    $COR_AZ_SUB_ALL = Get-AzSubscription -TenantId $MAS_CLI.TenantId | Select-Object *
-    $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Login,Azure Resources" )
-
-        ################################################################################################
+    ################################################################################################
     #region                              Azure Users
     ################################################################################################
     $DB_AZ_USR_ALL = Get-AzADUser | Select-Object *
@@ -175,8 +183,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         Add-AzTableRow `
             -UpdateExisting `
             -Table $OUT_DB_TBL_USR.CloudTable `
-            -PartitionKey $SUB.SubscriptionId `
-            -RowKey $AZ_USR.UserPrincipalName.Replace("#","_") `
+            -PartitionKey $MAS_CLI.TenantId `
+            -RowKey $AZ_USR.Id `
             -Property @{
                 "UserPrincipalName" = $AZ_USR.UserPrincipalName;
                 "ObjectType"        = $AZ_USR.ObjectType;
@@ -187,7 +195,6 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 "MailNickname"      = $AZ_USR.MailNickname;
                 "Mail"              = $AZ_USR_MAL;
                 "DisplayName"       = $AZ_USR.DisplayName;
-                "Id"                = $AZ_USR.Id;
                 "Type"              = $AZ_USR_TYP;
                 "UserDomain"        = $AZ_USR.UserPrincipalName.Substring($AZ_USR.UserPrincipalName.IndexOf("@")+1)
             } | Out-Null
@@ -208,8 +215,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
         
         $GBL_IN_FOR_CNT = 1
         $GBL_IN_SUB_CNT = 0
-        $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Login,Azure AD" )
-
+        
         ################################################################################################
         #endregion                   Initialization Variables and Information
         ################################################################################################
@@ -370,6 +376,40 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,Enabled" )
 
             #endregion informacion de las subscripciones
+
+            #region revisión de azure defender (recomendaciones)
+            $DB_AZ_ASC_ALL = Get-AzSecurityTask
+            foreach($TSK in $DB_AZ_ASC_ALL){
+                if((Parse-AzResourceID -ResourceID $TSK.ResourceId).ResourceGroup){
+                    $ASC_RG = (Parse-AzResourceID -ResourceID $TSK.ResourceId).ResourceGroup
+                }
+                else{
+                    $ASC_RG = "Not Applicable"
+                }
+                if((Parse-AzResourceID -ResourceID $TSK.ResourceId).Resource){
+                    $ASC_RS = (Parse-AzResourceID -ResourceID $TSK.ResourceId).Resource
+                }
+                else{
+                    $ASC_RS = "Not Applicable"
+                }
+                Add-AzTableRow `
+                -UpdateExisting `
+                -Table $OUT_DB_TBL_ASC.CloudTable `
+                -PartitionKey $SUB.SubscriptionId `
+                -RowKey $TSK.Name `
+                -Property @{
+                    "TenantId" = $SUB.TenantId;
+                    "Id" = $TSK.Id;
+                    "Name" = $TSK.Name;
+                    "RecommendationType" = $TSK.RecommendationType;
+                    "ResourceId" = $TSK.ResourceId;
+                    "ResourceGroup" = $ASC_RG;
+                    "Resource" = $ASC_RS
+                } | Out-Null
+            }
+            $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure Defender Tasks," + $DB_AZ_ASC_ALL.Length)
+
+            #endregion revisión de azure defender (recomendaciones)
 
             #region provisionamiento de tablas de acceso de recursos
             $DB_AZ_RES_TYP  = @()
@@ -1349,6 +1389,10 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     #endregion                  Azure Function - Teams reporting
     ################################################################################################
 }
+
+################################################################################################
+#endregion                      Get Client information
+################################################################################################
 
 $APP_INS_PHA = "Finalization,"
 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + ",,," + $APP_INS_PHA + "Shutdown,Done")
