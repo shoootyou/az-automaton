@@ -47,7 +47,7 @@ $APP_INS_PHA = "Master Tables,"
 
 $INT_CT_TBL_CLI = New-AzStorageContext -ConnectionString $ENV:AzAu_ClientConnectionString
 $INT_NM_TBL_CLI = Get-AzStorageTable -Context $INT_CT_TBL_CLI -Name "amasterclients" -ErrorAction SilentlyContinue
-$INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp 
+$INT_DB_TBL_SUB = Get-AzTableRow -Table $INT_NM_TBL_CLI.CloudTable -PartitionKey "Clients" | Sort-Object TableTimestamp -Descending
 
 $OUT_TBL_CTX = New-AzStorageContext -ConnectionString $ENV:AzAu_ConnectionString
 $OUT_DB_TBL_SUB = Get-AzStorageTable -Context $OUT_TBL_CTX 
@@ -139,6 +139,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     $COR_AZ_TNT_ALL = Connect-AzureAD -CertificateThumbprint $ENV:AzAu_CertificateThumbprint -ApplicationId $ENV:AzAu_ApplicationId -TenantId $MAS_CLI.TenantId
     $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Login,Azure AD" )
 
+    $APP_INS_EVT.Flush()
     ################################################################################################
     #endregion                              Login process
     ################################################################################################
@@ -200,6 +201,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             } | Out-Null
     }
     $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + ",," + $APP_INS_PHA + "Azure Users," + $DB_AZ_USR_ALL.Length )
+    $APP_INS_EVT.Flush()
 
     ################################################################################################
     #endregion                           Azure Users
@@ -229,6 +231,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,Disabled" )
                 Start-Sleep -Seconds 10    
             }
+            $APP_INS_EVT.Flush()
         }
         else{
             #region selección de subscripción y recursos
@@ -374,7 +377,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     "AzSecurityWDATP" = $SEC_WDA;
                 } | Out-Null
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Subscription info,Enabled" )
-
+            $APP_INS_EVT.Flush()
             #endregion informacion de las subscripciones
 
             #region revisión de azure defender (recomendaciones)
@@ -526,7 +529,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 } | Out-Null
             }
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure Defender Tasks," + $DB_AZ_ASC_ALL.Length)
-
+            $APP_INS_EVT.Flush()
             #endregion revisión de azure defender (recomendaciones)
 
             #region provisionamiento de tablas de acceso de recursos
@@ -555,7 +558,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources Tables,microsoftcomputedisksu")
             }
             #endregion creacion de tabla para discos no atachados
-
+            $APP_INS_EVT.Flush()
             #endregion provisionamiento de tablas de acceso de recursos
             
             #region informacion de las regiones empleadas
@@ -578,7 +581,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Regions,1")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de las regiones empleadas
 
             #region información de grupos de recursos
@@ -598,7 +601,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     } | Out-Null
             }
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resource Group," + $DB_AZ_RSG_ALL.Length)
-
+            $APP_INS_EVT.Flush()
             #endregion información de grupos de recursos
 
             #region información general de recursos
@@ -639,6 +642,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Resources,1")
             }
             $GBL_IN_FOR_CNT = 1
+            $APP_INS_EVT.Flush()
             #endregion información general de recursos
 
             #region información recomendaciones de azure advisor
@@ -690,6 +694,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
             
             $GBL_IN_FOR_CNT = 1
+            $APP_INS_EVT.Flush()
             #endregion información recomendaciones de azure advisor
 
             #region información de informacion de usuarios administrativos de Azure
@@ -778,6 +783,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             }
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "RBAC," + $DB_AZ_PER_ALL.Length)
             $GBL_IN_FOR_CNT = 1
+            $APP_INS_EVT.Flush()
             #endregion información de informacion de usuarios administrativos de Azure
 
             #region informacion de Storages Accounts
@@ -884,7 +890,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Storages Accounts,0")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de Storages Accounts
 
             #region informacion de Virtual Machines
@@ -1059,7 +1065,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "VMS,0")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de Virtual Machines
 
             #region informacion de Azure Disks
@@ -1257,7 +1263,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Disks,0")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de Azure Disks
 
             #region informacion de  Azure SQL Server
@@ -1359,7 +1365,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL,0")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de  Azure SQL Server
         
             #region informacion de  Azure SQL Database
@@ -1439,7 +1445,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             else{
                 $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure SQL Databases,0")
             }
-            
+            $APP_INS_EVT.Flush()
             #endregion informacion de  Azure SQL Database
         }
         $GBL_IN_SUB_CNT++
@@ -1447,7 +1453,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                              Process Section
     ################################################################################################
-
+    $APP_INS_EVT.Flush()
     ################################################################################################
     #region                     Azure Function - Teams reporting
     ################################################################################################
@@ -1506,6 +1512,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
     ################################################################################################
     #endregion                  Azure Function - Teams reporting
     ################################################################################################
+    $APP_INS_EVT.Flush()
 }
 
 ################################################################################################
