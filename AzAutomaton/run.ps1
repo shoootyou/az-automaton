@@ -1449,6 +1449,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             #endregion informacion de  Azure SQL Database
         }
         $GBL_IN_SUB_CNT++
+        Write-Host ($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Section,Subscription")
     }
     ################################################################################################
     #endregion                              Process Section
