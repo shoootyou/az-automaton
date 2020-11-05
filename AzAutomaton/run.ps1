@@ -127,7 +127,7 @@ $APP_INS_EVT.Flush()
 ################################################################################################
 $APP_INS_PHA = "Get Information,"
 foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
-    
+
     ################################################################################################
     #region                                 Login process
     ################################################################################################
@@ -380,6 +380,7 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
             #region revisión de azure defender (recomendaciones)
             $DB_AZ_ASC_ALL = Get-AzSecurityTask
             foreach($TSK in $DB_AZ_ASC_ALL){
+                #region validaciones internas
                 if((Parse-AzResourceID -ResourceID $TSK.ResourceId).ResourceGroup){
                     $ASC_RG = (Parse-AzResourceID -ResourceID $TSK.ResourceId).ResourceGroup
                 }
@@ -392,6 +393,122 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                 else{
                     $ASC_RS = "Not Applicable"
                 }
+
+                switch -wildcard ($TSK.RecommendationType) {
+                    "*Audit*" {
+                        $ASC_TAB = "Audit Configuration"
+                        }
+                    "*Azure Defender*" {
+                        $ASC_TAB = "Azure Defender"
+                    }
+                    "UpgradePricingTierTaskParameters" {
+                        $ASC_TAB = "Azure Defender"
+                    }
+                    "Adaptive*" {
+                        $ASC_TAB = "Azure Defender"
+                    }
+                    "*Diag*" {
+                        $ASC_TAB = "Diagnostic Configuration"
+                    }
+                    "*Monitoring*" {
+                        $ASC_TAB = "Diagnostic Configuration"
+                    }
+                    "*data collection*" {
+                        $ASC_TAB = "Diagnostic Configuration"
+                    }
+                    "*Log Analytics*" {
+                        $ASC_TAB = "Diagnostic Configuration"
+                    }
+                    "*Vulnerabili*" {
+                        $ASC_TAB = "Vulnerabilities"
+                    }
+                    "*FTPS*" {
+                        $ASC_TAB = "Secure Connection"
+                    }
+                    "*HTTPS*" {
+                        $ASC_TAB = "Secure Connection"
+                    }
+                    "*TLS*" {
+                        $ASC_TAB = "Secure Connection"
+                    }
+                    "*SSL*" {
+                        $ASC_TAB = "Secure Connection"
+                    }
+                    "*restart*" {
+                        $ASC_TAB = "Reboot required"
+                    }
+                    "*Reboot*" {
+                        $ASC_TAB = "Reboot required"
+                    }
+                    "*MFA*" {
+                        $ASC_TAB = "Identity control"
+                    }
+                    "There should be more than one *" {
+                        $ASC_TAB = "Identity control"
+                    }
+                    "External accounts with *" {
+                        $ASC_TAB = "Identity control"
+                    }
+                    "*RBAC*" {
+                        $ASC_TAB = "Identity control"
+                    }
+                    "*A maximum of 3 owners should*" {
+                        $ASC_TAB = "Identity control"
+                    }
+                    "*encryption*" {
+                        $ASC_TAB = "Encryption required"
+                    }
+                    "*Azure Firewall*" {
+                        $ASC_TAB = "Network protection"
+                    }
+                    "*firewall and virtual network*"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "Management ports*"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "All network ports should*"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "Secure transfer *"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "*public access should be disallowed"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "Private endpoint should*"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "*Azure DDoS Protection Standard*"{
+                        $ASC_TAB = "Network protection"
+                    }
+                    "*backup*"{
+                        $ASC_TAB = "Backup & redundancy"
+                    }
+                    "*endpoint protection*"{
+                        $ASC_TAB = "Endpoint protection"
+                    }
+                    "InstallAntimalware"{
+                        $ASC_TAB = "Endpoint protection"
+                    }
+                    "Managed identity should be*"{
+                        $ASC_TAB = "Managed Identity"
+                    }
+                    "Service principals *"{
+                        $ASC_TAB = "Managed Identity"
+                    }
+                    "*should be migrated to new Azure Resource Manager*"{
+                        $ASC_TAB = "Convert to ARM"
+                    }
+                    "*System updates*"{
+                        $ASC_TAB = "System Updates required"
+                    }
+                    Default {
+                        $ASC_TAB = "Others"
+                    }
+                }
+
+                #endregion validaciones internas
                 Add-AzTableRow `
                 -UpdateExisting `
                 -Table $OUT_DB_TBL_ASC.CloudTable `
@@ -404,7 +521,8 @@ foreach($MAS_CLI in $INT_DB_TBL_SUB ) {
                     "RecommendationType" = $TSK.RecommendationType;
                     "ResourceId" = $TSK.ResourceId;
                     "ResourceGroup" = $ASC_RG;
-                    "Resource" = $ASC_RS
+                    "Resource" = $ASC_RS;
+                    "RecommendationFilter" = $ASC_TAB
                 } | Out-Null
             }
             $APP_INS_EVT.TrackEvent($APP_INS_MAS + $APP_INS_GID + (Get-Date) + "," + $MAS_CLI.RowKey + "," + $SUB.Name +"," + $APP_INS_PHA + "Azure Defender Tasks," + $DB_AZ_ASC_ALL.Length)
